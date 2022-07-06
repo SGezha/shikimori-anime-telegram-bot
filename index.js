@@ -93,7 +93,7 @@ bot.command('random', async (ctx) => {
   let msgText = ctx.message.text
   let randomPage = getRandomInt(0, 346)
   let randomAnime = getRandomInt(0, 49)
-  axios.get(`https://shikimori.one/api/animes?page=346&limit=50`).then(async randomRes => {
+  axios.get(`https://shikimori.one/api/animes?page=346&limit=50`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } }).then(async randomRes => {
     let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
     const res = await axios.get(`https://shikimori.one/api/animes/${randomRes.data[randomAnime].id}`)
     const anime = res.data
@@ -107,7 +107,7 @@ bot.command('findbyid', async (ctx) => {
   let msgText = ctx.message.text
   if (msgText.split(' ')[1] == undefined) return ctx.reply('Неверный формат команды. \nПример команды: /findbyid <id>')
   let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
-  const res = await axios.get(`https://shikimori.one/api/animes/${msgText.split(' ')[1]}`)
+  const res = await axios.get(`https://shikimori.one/api/animes/${msgText.split(' ')[1]}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
   const anime = res.data
   let animeData = await getAnimeData(user, anime, msgText.split(' ')[1])
   ctx.reply(animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
@@ -121,7 +121,7 @@ bot.command('profile', async (ctx) => {
   if (user != undefined) {
     const { data: profile } = await axios.get(`https://shikimori.one/api/users/${user.nickname}?is_nickname=1`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
     const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${profile.id}&limit=1000&status=watching`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
-    const { data: animeList } = await axios.get(`https://shikimori.one/api/animes?ids=${list.map(id => id.target_id).join(',')}&limit=50`)
+    const { data: animeList } = await axios.get(`https://shikimori.one/api/animes?ids=${list.map(id => id.target_id).join(',')}&limit=50`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
     let nowText = `\nСейчас смотрит: `
     list.slice(0, 5).forEach(async (a, ind) => {
       let animeData = animeList.find(b => { if (b.id == a.target_id) return true })
@@ -145,9 +145,9 @@ bot.action('random', async (ctx) => {
   let msg = ctx.update.callback_query
   let randomPage = getRandomInt(0, 346)
   let randomAnime = getRandomInt(0, 49)
-  axios.get(`https://shikimori.one/api/animes?page=346&limit=50`).then(async randomRes => {
+  axios.get(`https://shikimori.one/api/animes?page=346&limit=50`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } }).then(async randomRes => {
     let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
-    const res = await axios.get(`https://shikimori.one/api/animes/${randomRes.data[randomAnime].id}`)
+    const res = await axios.get(`https://shikimori.one/api/animes/${randomRes.data[randomAnime].id}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
     const anime = res.data
     let animeData = await getAnimeData(user, anime, randomRes.data[randomAnime].id, true)
     bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
@@ -159,7 +159,7 @@ bot.action('about', async (ctx) => {
   let msg = ctx.update.callback_query
   let animeId = msg.message.text.split('ID: ')[1].split('\n')[0]
   let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
-  const res = await axios.get(`https://shikimori.one/api/animes/${animeId}`)
+  const res = await axios.get(`https://shikimori.one/api/animes/${animeId}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
   const anime = res.data
   let animeData = await getAnimeData(user, anime, animeId)
   bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
@@ -189,7 +189,7 @@ bot.action(/^status-(\d+)$/, async (ctx) => {
       if (selected == 5) status = 'dropped'
       axios.post(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${animeId}&target_type=Anime`, { user_rate: { user_id: user.shikimori_id, target_id: animeId, target_type: 'Anime', status: status } }, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
         .then(async res => {
-          const animeRes = await axios.get(`https://shikimori.one/api/animes/${animeId}`)
+          const animeRes = await axios.get(`https://shikimori.one/api/animes/${animeId}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
           const anime = animeRes.data
           let animeData = await getAnimeData(user, anime, animeId)
           bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
@@ -212,7 +212,7 @@ bot.action(/^status-(\d+)$/, async (ctx) => {
           needKeyboard = false
           axios.delete(`https://shikimori.one/api/v2/user_rates/${list[0].id}`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
             .then(async res => {
-              const animeRes = await axios.get(`https://shikimori.one/api/animes/${animeId}`)
+              const animeRes = await axios.get(`https://shikimori.one/api/animes/${animeId}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
               const anime = animeRes.data
               let animeData = await getAnimeData(user, anime, animeId)
               bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
@@ -246,7 +246,7 @@ bot.action(/^star-(\d+)$/, async (ctx) => {
     if (selected != 20) {
       axios.post(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${animeId}&target_type=Anime`, { user_rate: { user_id: user.shikimori_id, target_id: animeId, target_type: 'Anime', score: parseInt(selected) } }, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
         .then(async res => {
-          const animeRes = await axios.get(`https://shikimori.one/api/animes/${animeId}`)
+          const animeRes = await axios.get(`https://shikimori.one/api/animes/${animeId}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
           const anime = animeRes.data
           let animeData = await getAnimeData(user, anime, animeId)
           bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
@@ -310,7 +310,7 @@ bot.on('inline_query', async (ctx) => {
     let query = ctx.update.inline_query.query
     let search = `https://shikimori.one/api/animes/?limit=50&search=${encodeURI(query)}&order=ranked `
     let result = []
-    let res = await axios.get(search)
+    let res = await axios.get(search, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
     const data = res.data
 
     data.forEach(async (i, ind) => {
@@ -367,7 +367,7 @@ bot.action(/^profile_completed-(\d+)$/, async (ctx) => {
     const { data: profile } = await axios.get(`https://shikimori.one/api/users/${user.nickname}?is_nickname=1`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
     let { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${profile.id}&limit=1000&status=completed`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
     list = list.sort((a, b) => b.score - a.score).slice(0, 50)
-    const { data: animeList } = await axios.get(`https://shikimori.one/api/animes?ids=${list.map(id => id.target_id).join(',')}&limit=50`)
+    const { data: animeList } = await axios.get(`https://shikimori.one/api/animes?ids=${list.map(id => id.target_id).join(',')}&limit=50`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
     let nowText = `<b>Список просмотренного:</b> `
     list.sort((a, b) => b.score - a.score).slice(0, 50).forEach(async (a, ind) => {
       let animeData = animeList.find(b => { if (b.id == a.target_id) return true })
