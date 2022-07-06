@@ -32,9 +32,7 @@ passport.use(new Strategy(
     }
     if (db.get('profiles').value().find(a => { if (a.lastTGid == obj.telegram_id) return true }) == undefined) {
       db.get('profiles').push(obj).save();
-      bot.telegram.sendMessage(lastTGid, `Вы авторизовались в Shikimori под ником ${profile.nickname}. Теперь можете пользоваться ботом`).then(res => {
-        bot.telegram.sendMessage(lastTGid, `<a href="${profile.url}"><b>${profile.nickname}</b></a><a href="${profile.image.x160}">\n</a>Последняя активность: ${new Date(profile.last_online_at).toLocaleDateString()}\nВозраст: ${profile.full_years}`, { parse_mode: 'HTML' })
-      })
+      bot.telegram.sendMessage(lastTGid, `Вы авторизовались в Shikimori под ником ${profile.nickname}. Теперь можете пользоваться ботом :3`)
     }
     done(null)
 	}
@@ -78,7 +76,18 @@ bot.launch()
 bot.start(async (ctx) => {
   let msgText = ctx.message.text
   if(ctx.from.id != ctx.chat.id) return
-  ctx.reply(`Привет, это бот для просмотра аниме с возможностью синхранизации данных с шикимори.\nБот использует базу данных <a href="https://shikimori.one">Shikimori.one</a> и базу видео <a href="https://chrome.google.com/webstore/detail/shikicinema/hmbjohbggdnlpmokjbholpgegcdbehjp?hl=ru">Shikicinema</a> \nДля синхранизации данных в шикимори нажмите кнопки внизу.`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({ 'inline_keyboard': [[{ text: '⚙️ Пройти авторизацию на шикимори', url: `https://animebot.smotrel.net/authorize?id=${ctx.from.id}`, hide: false }]] }) })
+  ctx.reply(`Привет, это бот для просмотра аниме с возможностью синхранизации данных с шикимори.\nБот использует базу данных <a href="https://shikimori.one">Shikimori.one</a> и базу видео <a href="https://chrome.google.com/webstore/detail/shikicinema/hmbjohbggdnlpmokjbholpgegcdbehjp?hl=ru">Shikicinema</a>\n\nДля поиска пишите: 
+@shikimori_anime_bot [Тут название аниме]
+\nДля синхранизации данных в шикимори нажмите кнопки внизу.`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({ 'inline_keyboard': [[{ text: '⚙️ Пройти авторизацию на шикимори', url: `https://animebot.smotrel.net/authorize?id=${ctx.from.id}`, hide: false }]] }) })
+})
+
+bot.command('help', async (ctx) => {
+  let msgText = ctx.message.text
+  ctx.reply(`Бот для бесплатного просмотра аниме в телеграмме. С функцией синхронизации прогресса с шикимори.
+Для поиска пишите: 
+@shikimori_anime_bot [Тут название аниме]
+
+Создатель бота: @FuNSasha`)
 })
 
 bot.command('auth', async (ctx) => {
