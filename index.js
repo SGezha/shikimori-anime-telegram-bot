@@ -68,9 +68,9 @@ app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
-// app.listen(port, () => {
-//   console.log(`Example app listening on port http://localhost:${port}`)
-// })
+app.listen(port, () => {
+  console.log(`Example app listening on port http://localhost:${port}`)
+})
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 bot.launch()
@@ -247,7 +247,6 @@ bot.action(/^star-(\d+)$/, async (ctx) => {
         console.log(er)
       })
     } else {
-      console.log('test')
       const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${animeId}&target_type=Anime`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` }  })
       if(list[0] != undefined) {
         let star = list[0].score
