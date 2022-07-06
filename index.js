@@ -40,6 +40,7 @@ passport.use(new Strategy(
 ));
 
 app.get('/authorize', (req, res) => {
+  const req_data = qs.parse(req.url.split('?')[1])
   lastTGid = req_data.id
   res.redirect('/auth/shikimori');
 });
