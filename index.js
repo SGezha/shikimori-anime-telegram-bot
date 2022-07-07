@@ -111,69 +111,84 @@ bot.command('auth', async (ctx) => {
 })
 
 bot.command('random', async (ctx) => {
-  let msgText = ctx.message.text
-  let randomPage = getRandomInt(0, 227)
-  let randomAnime = getRandomInt(0, 49)
-  axios.get(`https://shikimori.one/api/animes?page=${randomPage}&limit=50&score=2`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } }).then(async randomRes => {
-    let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
-    const res = await axios.get(`https://shikimori.one/api/animes/${randomRes.data[randomAnime].id}`)
-    const anime = res.data
-    let animeData = await getAnimeData(user, anime, msgText.split(' ')[1], true)
-    ctx.reply(animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
-    ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
-  })
+  try {
+    let msgText = ctx.message.text
+    let randomPage = getRandomInt(0, 227)
+    let randomAnime = getRandomInt(0, 49)
+    axios.get(`https://shikimori.one/api/animes?page=${randomPage}&limit=50&score=2`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } }).then(async randomRes => {
+      let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
+      const res = await axios.get(`https://shikimori.one/api/animes/${randomRes.data[randomAnime].id}`)
+      const anime = res.data
+      let animeData = await getAnimeData(user, anime, msgText.split(' ')[1], true)
+      ctx.reply(animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
+      ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
+    })
+  } catch (er) {
+    ctx.reply(`Ошибка при получении данных аниме. Попробуйте еще раз.\nЕсли ошибка повторяется, обратитесь к создателю бота.\n${er}`)
+  }
 })
 
 bot.command('findbyid', async (ctx) => {
-  let msgText = ctx.message.text
-  if (msgText.split(' ')[1] == undefined) return ctx.reply('Неверный формат команды. \nПример команды: /findbyid <id>')
-  let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
-  const res = await axios.get(`https://shikimori.one/api/animes/${parseInt(msgText.split(' ')[1])}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
-  const anime = res.data
-  let animeData = await getAnimeData(user, anime, msgText.split(' ')[1])
-  ctx.reply(animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
-  ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
+  try {
+    let msgText = ctx.message.text
+    if (msgText.split(' ')[1] == undefined) return ctx.reply('Неверный формат команды. \nПример команды: /findbyid <id>')
+    let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
+    const res = await axios.get(`https://shikimori.one/api/animes/${parseInt(msgText.split(' ')[1])}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
+    const anime = res.data
+    let animeData = await getAnimeData(user, anime, msgText.split(' ')[1])
+    ctx.reply(animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
+    ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
+  } catch (er) {
+    ctx.reply(`Ошибка при получении данных аниме. Попробуйте еще раз.\nЕсли ошибка повторяется, обратитесь к создателю бота.\n${er}`)
+  }
 })
 
 bot.command('profile', async (ctx) => {
-  let msgText = ctx.message.text
-  let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
-  if (user != undefined) {
-    user = await getNewToken(user)
-    const { data: profile } = await axios.get(`https://shikimori.one/api/users/${user.nickname}?is_nickname=1`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
-    const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${profile.id}&limit=1000&status=watching`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
-    const { data: animeList } = await axios.get(`https://shikimori.one/api/animes?ids=${list.map(id => id.target_id).join(',')}&limit=50`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
-    let nowText = `\nСейчас смотрит: `
-    list.slice(0, 5).forEach(async (a, ind) => {
-      let animeData = animeList.find(b => { if (b.id == a.target_id) return true })
-      if (animeData) nowText += `\n<a href="https://shikimori.one/animes/${a.target_id}">${animeData ? animeData.name : 'Нет названия'}</a> - ${a.score} ⭐️ [${a.episodes}/${animeData ? animeData.episodes : ''}]`
-    })
-    let animeKeyboard = {
-      'inline_keyboard': [
-        [{ text: '✅ Профиль', callback_data: `profile-${profile.id}`, hide: false }, { text: 'Список просмотренного', callback_data: `profile_completed-${profile.id}`, hide: false }],
-      ]
-    }
+  try {
+    let msgText = ctx.message.text
+    let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
+    if (user != undefined) {
+      user = await getNewToken(user)
+      const { data: profile } = await axios.get(`https://shikimori.one/api/users/${user.nickname}?is_nickname=1`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
+      const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${profile.id}&limit=1000&status=watching`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
+      const { data: animeList } = await axios.get(`https://shikimori.one/api/animes?ids=${list.map(id => id.target_id).join(',')}&limit=50`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
+      let nowText = `\nСейчас смотрит: `
+      list.slice(0, 5).forEach(async (a, ind) => {
+        let animeData = animeList.find(b => { if (b.id == a.target_id) return true })
+        if (animeData) nowText += `\n<a href="https://shikimori.one/animes/${a.target_id}">${animeData ? animeData.name : 'Нет названия'}</a> - ${a.score} ⭐️ [${a.episodes}/${animeData ? animeData.episodes : ''}]`
+      })
+      let animeKeyboard = {
+        'inline_keyboard': [
+          [{ text: '✅ Профиль', callback_data: `profile-${profile.id}`, hide: false }, { text: 'Список просмотренного', callback_data: `profile_completed-${profile.id}`, hide: false }],
+        ]
+      }
 
-    ctx.reply(`<a href="${profile.url}"><b>${profile.nickname}</b></a><a href="${profile.image.x160}">\n</a>Последняя активность: ${new Date(profile.last_online_at).toLocaleDateString()}\nВозраст: ${profile.full_years}\n${nowText}`
-      , { parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
-  } else {
-    ctx.reply(`Для авторизации введите команду /auth (Работает только в личных сообщениях).`)
+      ctx.reply(`<a href="${profile.url}"><b>${profile.nickname}</b></a><a href="${profile.image.x160}">\n</a>Последняя активность: ${new Date(profile.last_online_at).toLocaleDateString()}\nВозраст: ${profile.full_years}\n${nowText}`, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
+    } else {
+      ctx.reply(`Для авторизации введите команду /auth (Работает только в личных сообщениях).`)
+    }
+    ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
+  } catch (er) {
+    ctx.reply(`Ошибка при получении данных аниме. Попробуйте еще раз.\nЕсли ошибка повторяется, обратитесь к создателю бота.\n${er}`)
   }
-  ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
 })
 
 bot.action('random', async (ctx) => {
-  let msg = ctx.update.callback_query
-  let randomPage = getRandomInt(0, 227)
-  let randomAnime = getRandomInt(0, 49)
-  axios.get(`https://shikimori.one/api/animes?page=${randomPage}&limit=50&score=2`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } }).then(async randomRes => {
-    let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
-    const res = await axios.get(`https://shikimori.one/api/animes/${randomRes.data[randomAnime].id}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
-    const anime = res.data
-    let animeData = await getAnimeData(user, anime, randomRes.data[randomAnime].id, true)
-    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
-  })
-  ctx.answerCbQuery(``)
+  try {
+    let msg = ctx.update.callback_query
+    let randomPage = getRandomInt(0, 227)
+    let randomAnime = getRandomInt(0, 49)
+    axios.get(`https://shikimori.one/api/animes?page=${randomPage}&limit=50&score=2`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } }).then(async randomRes => {
+      let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
+      const res = await axios.get(`https://shikimori.one/api/animes/${randomRes.data[randomAnime].id}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
+      const anime = res.data
+      let animeData = await getAnimeData(user, anime, randomRes.data[randomAnime].id, true)
+      bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
+    })
+    ctx.answerCbQuery(``)
+  } catch {
+    ctx.reply(`Ошибка при получении данных аниме. Попробуйте еще раз.\nЕсли ошибка повторяется, обратитесь к создателю бота.\n${er}`)
+  } 
 })
 
 bot.action('about', async (ctx) => {
