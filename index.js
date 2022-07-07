@@ -30,8 +30,9 @@ passport.use(new Strategy(
       shikimori_id: profile.id,
       nickname: profile.nickname,
       token: accessToken,
+      refreshToken: refreshToken
     }
-    if (db.get('profiles').value().find(a => { if (a.lastTGid == obj.telegram_id) return true }) == undefined) {
+    if (db.get('profiles').value().find(a => { if (a.telegram_id == obj.telegram_id) return true }) == undefined) {
       db.get('profiles').push(obj).save();
       bot.telegram.sendMessage(lastTGid, `Вы авторизовались в Shikimori под ником ${profile.nickname}. Теперь можете пользоваться ботом :3`)
     }
@@ -83,6 +84,16 @@ bot.command('help', async (ctx) => {
 Создатель бота: @FuNSasha`)
 })
 
+bot.command('list', async (ctx) => {
+  let msgText = ctx.message.text
+  let text = 'Список анимешников: '
+  let list = db.get('profiles').value()
+  list.slice(0, 50).forEach(u => {
+    text += `\n<a href="https://shikimori.one/${u.nickname}">${u.nickname}</a> - <a href="${u.telegram_id}">${u.telegram_id}</a>`
+  })
+  ctx.reply(text, {disable_notification: true, disable_web_page_preview: true, parse_mode: 'HTML'})
+})
+
 bot.command('auth', async (ctx) => {
   let msgText = ctx.message.text
   if (ctx.from.id != ctx.chat.id) return
@@ -117,8 +128,8 @@ bot.command('findbyid', async (ctx) => {
 bot.command('profile', async (ctx) => {
   let msgText = ctx.message.text
   let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
-  if (msgText.split(' ')[1] != undefined) user.nickname = msgText.split(' ')[1]
   if (user != undefined) {
+    user = await getNewToken(user)
     const { data: profile } = await axios.get(`https://shikimori.one/api/users/${user.nickname}?is_nickname=1`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
     const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${profile.id}&limit=1000&status=watching`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
     const { data: animeList } = await axios.get(`https://shikimori.one/api/animes?ids=${list.map(id => id.target_id).join(',')}&limit=50`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
@@ -179,6 +190,7 @@ bot.action(/^status-(\d+)$/, async (ctx) => {
   }
   let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
   if (user != undefined) {
+    user = await getNewToken(user)
     if (selected != 20 && selected != 6) {
       let status = ''
       if (selected == 0) status = 'completed'
@@ -244,6 +256,7 @@ bot.action(/^star-(\d+)$/, async (ctx) => {
   let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
   if (user != undefined) {
     if (selected != 20) {
+      user = await getNewToken(user)
       axios.post(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${animeId}&target_type=Anime`, { user_rate: { user_id: user.shikimori_id, target_id: animeId, target_type: 'Anime', score: parseInt(selected) } }, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
         .then(async res => {
           const animeRes = await axios.get(`https://shikimori.one/api/animes/${animeId}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
@@ -280,6 +293,7 @@ async function getAnimeData(user, anime, animeId, random) {
   let nowEpisode = 1
   let animeKeyboard = { 'inline_keyboard': [[{ text: '📺 Список серий', callback_data: `list_dub-${nowEpisode}`, hide: false }]] }
   if (user != undefined) {
+    user = await getNewToken(user)
     const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${anime.id}&target_type=Anime`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
     if (list.length > 0) {
       nowEpisode = list[0].episodes
@@ -299,7 +313,7 @@ async function getAnimeData(user, anime, animeId, random) {
 Жанры: ${anime.genres.map(genre => genre.russian).join(', ')}
 Рейтинг: ${anime.rating.toUpperCase()}
 ID: ${anime.id}
-Тип: ${anime.kind.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>${anime.description ? anime.description.replace(/([\[]*)\[(.*?)\]/gm, '') : ''}
+Тип: ${anime.kind.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>${anime.description ? anime.description.replace(/([\[]*)\[(.*?)\]/gm, '') : ''}${user != undefined ? '\nСейчас тыкает: <b>' + user.nickname + '</b>' : ''}
     `,
     keyboard: animeKeyboard
   }
@@ -338,6 +352,7 @@ bot.action(/^profile-(\d+)$/, async (ctx) => {
   let selectedUser = ctx.match[1]
   let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
   if (user != undefined) {
+    user = await getNewToken(user)
     const { data: profile } = await axios.get(`https://shikimori.one/api/users/${user.nickname}?is_nickname=1`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
     const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${profile.id}&limit=1000&status=watching`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
     const { data: animeList } = await axios.get(`https://shikimori.one/api/animes?ids=${list.map(id => id.target_id).join(',')}&limit=50`)
@@ -351,8 +366,7 @@ bot.action(/^profile-(\d+)$/, async (ctx) => {
         [{ text: '✅ Профиль', callback_data: `profile-${selectedUser}`, hide: false }, { text: 'Список просмотренного', callback_data: `profile_completed-${selectedUser}`, hide: false }],
       ]
     }
-    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<a href="${profile.url}"><b>${profile.nickname}</b></a><a href="${profile.image.x160}">\n</a>Последняя активность: ${new Date(profile.last_online_at).toLocaleDateString()}\nВозраст: ${profile.full_years}\n${nowText}`
-      , { parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard), disable_web_page_preview: false })
+    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<a href="${profile.url}"><b>${profile.nickname}</b></a><a href="${profile.image.x160}">\n</a>Последняя активность: ${new Date(profile.last_online_at).toLocaleDateString()}\nВозраст: ${profile.full_years}\n${nowText}`, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard), disable_web_page_preview: false })
   } else {
     ctx.reply(`Для авторизации введите команду /auth`)
   }
@@ -364,6 +378,7 @@ bot.action(/^profile_completed-(\d+)$/, async (ctx) => {
   let selectedUser = ctx.match[1]
   let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
   if (user != undefined) {
+    user = await getNewToken(user)
     const { data: profile } = await axios.get(`https://shikimori.one/api/users/${user.nickname}?is_nickname=1`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
     let { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${profile.id}&limit=1000&status=completed`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
     list = list.sort((a, b) => b.score - a.score).slice(0, 50)
@@ -392,6 +407,7 @@ bot.action(/^watch-(\d+)$/, async (ctx) => {
   let name = msg.message.text.split('\n')[0]
   let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
   if (user != undefined) {
+    user = await getNewToken(user)
     axios.post(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${animeId}&target_type=Anime`, { user_rate: { user_id: user.shikimori_id, target_id: animeId, target_type: 'Anime', episodes: parseInt(epidose), status: 'watching' } }, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
       .then(async postRes => {
         let maxEpidose = msg.message.text.split('Эпизоды: ')[1].split('\n')[0]
@@ -464,6 +480,7 @@ bot.action(/^list_dub-(\d+)$/, async (ctx) => {
     }
   }
   if (user != undefined) {
+    user = await getNewToken(user)
     const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${animeId}&target_type=Anime`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
     if (list.length > 0 && list[0].episodes >= episode) {
       animeKeyboard.inline_keyboard.push([{ text: `✅ Снять просмотр`, callback_data: `watch-${episode}`, hide: false }])
@@ -481,6 +498,7 @@ bot.action(/^list_sub-(\d+)$/, async (ctx) => {
   let name = msg.message.text.split('\n')[0]
   let maxEpidose = msg.message.text.split('Эпизоды: ')[1].split('\n')[0]
   let episode = +ctx.match[0].split('-')[1]
+  let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
   const res = await axios.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
   let episodeText = getEpisode(res.data, 1);
   let animeKeyboard = {
@@ -502,6 +520,15 @@ bot.action(/^list_sub-(\d+)$/, async (ctx) => {
       episodesNow++
     }
   }
+  if (user != undefined) {
+    user = await getNewToken(user)
+    const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${animeId}&target_type=Anime`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
+    if (list.length > 0 && list[0].episodes >= episode) {
+      animeKeyboard.inline_keyboard.push([{ text: `✅ Снять просмотр`, callback_data: `watch-${episode}`, hide: false }])
+    } else {
+      animeKeyboard.inline_keyboard.push([{ text: `⛔️ Отметить серию`, callback_data: `watch-${episode}`, hide: false }])
+    }
+  }
   bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\n${episode} серия\nID: ${animeId}\nЭпизоды: ${maxEpidose}\n${episodeText}`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
   ctx.answerCbQuery(``)
 })
@@ -512,6 +539,7 @@ bot.action(/^list_original-(\d+)$/, async (ctx) => {
   let name = msg.message.text.split('\n')[0]
   let maxEpidose = msg.message.text.split('Эпизоды: ')[1].split('\n')[0]
   let episode = +ctx.match[0].split('-')[1]
+  let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
   const res = await axios.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
   let episodeText = getEpisode(res.data, 2);
   let animeKeyboard = {
@@ -533,9 +561,27 @@ bot.action(/^list_original-(\d+)$/, async (ctx) => {
       episodesNow++
     }
   }
+  if (user != undefined) {
+    user = await getNewToken(user)
+    const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${animeId}&target_type=Anime`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
+    if (list.length > 0 && list[0].episodes >= episode) {
+      animeKeyboard.inline_keyboard.push([{ text: `✅ Снять просмотр`, callback_data: `watch-${episode}`, hide: false }])
+    } else {
+      animeKeyboard.inline_keyboard.push([{ text: `⛔️ Отметить серию`, callback_data: `watch-${episode}`, hide: false }])
+    }
+  }
   bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\n${episode} серия\nID: ${animeId}\nЭпизоды: ${maxEpidose}\n${episodeText}`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
   ctx.answerCbQuery(``)
 })
+
+async function getNewToken(user) {
+  let { data: newUser } = await axios.post(`https://shikimori.one/oauth/token`, { grant_type: 'refresh_token', client_id: 'JKQWvr99tmLsiO28lerI4rADSicAbYlt3wPQ453aaaY', client_secret: 'I8pgivvnVqNkjUm7D2nHSyumU7d5w_H6P2Y998JauJw', refresh_token: user.refreshToken }, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
+  let nowUser = db.get('profiles').value().find(a => { if (user.telegram_id == a.telegram_id) return true })
+  nowUser.token = newUser.access_token
+  nowUser.refreshToken = newUser.refresh_token
+  db.get('profiles').save()
+  return nowUser
+}
 
 function statusToRus(status) {
   if (status == 'completed') return 'Просмотрено'
