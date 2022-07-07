@@ -112,9 +112,9 @@ bot.command('auth', async (ctx) => {
 
 bot.command('random', async (ctx) => {
   let msgText = ctx.message.text
-  let randomPage = getRandomInt(0, 346)
+  let randomPage = getRandomInt(0, 227)
   let randomAnime = getRandomInt(0, 49)
-  axios.get(`https://shikimori.one/api/animes?page=${randomPage}&limit=50`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } }).then(async randomRes => {
+  axios.get(`https://shikimori.one/api/animes?page=${randomPage}&limit=50&score=2`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } }).then(async randomRes => {
     let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
     const res = await axios.get(`https://shikimori.one/api/animes/${randomRes.data[randomAnime].id}`)
     const anime = res.data
@@ -164,9 +164,9 @@ bot.command('profile', async (ctx) => {
 
 bot.action('random', async (ctx) => {
   let msg = ctx.update.callback_query
-  let randomPage = getRandomInt(0, 346)
+  let randomPage = getRandomInt(0, 227)
   let randomAnime = getRandomInt(0, 49)
-  axios.get(`https://shikimori.one/api/animes?page=${randomPage}&limit=50`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } }).then(async randomRes => {
+  axios.get(`https://shikimori.one/api/animes?page=${randomPage}&limit=50&score=2`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } }).then(async randomRes => {
     let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
     const res = await axios.get(`https://shikimori.one/api/animes/${randomRes.data[randomAnime].id}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
     const anime = res.data
