@@ -513,7 +513,7 @@ bot.action(/^list_dub-(\d+)$/, async (ctx) => {
       animeKeyboard.inline_keyboard.push([{ text: `⛔️ Отметить серию`, callback_data: `watch-${episode}`, hide: false }])
     }
   }
-  bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\n${episode} серия\nID: ${animeId}\nЭпизоды: ${maxEpidose}\n${episodeText}`.slice(0, 3200), { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
+  bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\n${episode} серия\nID: ${animeId}\nЭпизоды: ${maxEpidose}\n${episodeText}`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
   ctx.answerCbQuery(``)
 })
 
@@ -639,7 +639,7 @@ function getEpisode(data, type) {
     if (a.kind == 'оригинал') episodesArray[2].data.push(a)
   })
   let episodeText = '';
-  episodesArray[type].data.sort((a, b) => b.watches_count - a.watches_count).forEach((a, ind) => {
+  episodesArray[type].data.sort((a, b) => b.watches_count - a.watches_count).filter(a => !a.url.includes('smotret-anime.online')).slice(0, 30).forEach((a, ind) => {
     if (ind == 0) episodeText += `\n`
     let type = a.url
     if (a.url.includes('https')) { type = `${type.split('https://')[1].split('/')[0]}` }
