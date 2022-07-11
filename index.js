@@ -185,10 +185,10 @@ bot.action('random', async (ctx) => {
       const res = await axios.get(`https://shikimori.one/api/animes/${randomRes.data[0].id}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
       const anime = res.data
       let animeData = await getAnimeData(user, anime, randomRes.data[0].id, true, msg.message.text)
-      bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `${animeData.msg}\n${randomSettings.msg}`, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
+      bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `${animeData.msg}${randomSettings.msg}`, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
     })
     ctx.answerCbQuery(``)
-  } catch {
+  } catch (er) {
     ctx.reply(`Ошибка при получении данных аниме. Попробуйте еще раз.\nЕсли ошибка повторяется, обратитесь к создателю бота.\n${er}`)
   } 
 })
@@ -569,7 +569,7 @@ function getRandomSettings(text, change, changeValue) {
     genres: [],
     status: undefined,
     query: '',
-    msg: '<b>Настройки рандома: </b>',
+    msg: '',
   }
   if(text.includes('оценка') && change != 'star') {
     settings.star = text.split('оценка-')[1].split(' ')[0]
@@ -585,6 +585,7 @@ function getRandomSettings(text, change, changeValue) {
   }
   if(change && change != 'genres') settings[change] = changeValue
   if(change == 'genres' && settings.genres.find(a => a == changeValue) == undefined) settings.genres.push(changeValue)
+  if(settings.star || settings.kind || settings.status || settings.genres.length > 0) settings.msg = '<b>Настройки рандома: </b>'
   if(settings.star) {
     settings.msg += `оценка-${settings.star} `
     settings.query += `&score=${settings.star}`
