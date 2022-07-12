@@ -580,7 +580,7 @@ function getRandomSettings(text, change, changeValue) {
   if(text.includes('статус') && change != 'status') {
     settings.status = text.split('статус-')[1].split(' ')[0]
   }
-  if(text.includes('жанры')) {
+  if(text.includes('жанры-')) {
     settings.genres = text.split('жанры-')[1].split(' ')[0].split(',')
   }
   if(change && change != 'genres') settings[change] = changeValue
@@ -662,8 +662,8 @@ async function getAnimeData(user, anime, animeId, random, message) {
 Жанры: ${anime.genres.map(genre => genre.russian).join(', ')}
 Рейтинг: ${anime.rating.toUpperCase()}
 ID: ${anime.id}
-Тип: ${anime.kind.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>${anime.description ? anime.description.replace(/([\[]*)\[(.*?)\]/gm, '') : ''}${user != undefined ? '\nСейчас тыкает: <b>' + user.nickname + '</b>' : ''}
-    `,
+Тип: ${anime.kind.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>${anime.description ? (anime.description.replace(/([\[]*)\[(.*?)\]/gm, '').length > 299) ? anime.description.replace(/([\[]*)\[(.*?)\]/gm, '').slice(0, 300) + '...' : anime.description.replace(/([\[]*)\[(.*?)\]/gm, '') : ''}${user != undefined ? '\nСейчас тыкает: <b>' + user.nickname + '</b>' : ''}
+`,
     keyboard: animeKeyboard
   }
 }
