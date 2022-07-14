@@ -62,12 +62,12 @@ app.get('/auth/shikimori/callback',
 );
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
+  res.send('Бот для просмотра аниме в телеграмме. С функцией синхронизации прогресса с шикимори. @FuNSasha')
 })
 
-// app.listen(port, () => {
-//   console.log(`Example app listening on port http://localhost:${port}`)
-// })
+app.listen(port, () => {
+  console.log(`Example app listening on port http://localhost:${port}`)
+})
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 bot.launch()
@@ -903,7 +903,8 @@ function statusToRus(status) {
 function getEpisode(data, kodik, episode, type) {
   kodik.results.forEach(a => {
     let kind = 'озвучка'
-    let videoUrl = a.seasons[Object.keys(a.seasons)[0]].episodes[`${episode}`]
+    let videoUrl = a.link
+    if(a.seasons) videoUrl = a.seasons[Object.keys(a.seasons)[0]].episodes[`${episode}`]
     if(a.translation.type == 'subtitles') kind = 'субтитры'
     if(videoUrl) data.push({
       id:	a.id,
