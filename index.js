@@ -189,6 +189,7 @@ bot.action('random', async (ctx) => {
     })
     ctx.answerCbQuery(``)
   } catch (er) {
+    console.log(er)
     ctx.reply(`Ошибка при получении данных аниме. Попробуйте еще раз.\nЕсли ошибка повторяется, обратитесь к создателю бота.\n${er}`)
   } 
 })
@@ -571,13 +572,13 @@ function getRandomSettings(text, change, changeValue) {
     query: '',
     msg: '',
   }
-  if(text.includes('оценка') && change != 'star') {
+  if(text.includes('оценка-') && change != 'star') {
     settings.star = text.split('оценка-')[1].split(' ')[0]
   }
-  if(text.includes('тип') && change != 'kind') {
+  if(text.includes('тип-') && change != 'kind') {
     settings.kind = text.split('тип-')[1].split(' ')[0]
   }
-  if(text.includes('статус') && change != 'status') {
+  if(text.includes('статус-') && change != 'status') {
     settings.status = text.split('статус-')[1].split(' ')[0]
   }
   if(text.includes('жанры-')) {
