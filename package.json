@@ -4,16 +4,24 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "author": "SGezha",
   "license": "ISC",
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^1.4.1",
+    "archiver": "^5.3.1",
     "axios": "^0.27.2",
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
+    "fluent-ffmpeg": "^2.1.2",
+    "fs-extra": "^10.1.0",
+    "nodemon": "^2.0.19",
     "passport": "^0.6.0",
     "passport-shikimori": "^1.0.2",
+    "puppeteer": "^15.5.0",
     "querystring": "^0.2.1",
     "stormdb": "^0.6.0",
     "telegraf": "^4.8.5"
