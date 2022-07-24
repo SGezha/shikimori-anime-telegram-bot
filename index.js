@@ -716,10 +716,6 @@ let startDownload = null
 
 bot.action('list_download', async (ctx) => {
   try {
-    if (nowDownload) {
-      ctx.answerCbQuery('Сейчас бот занят загрузкой другого аниме, подождите пожалуйста 🥺')
-      return
-    }
     let msg = ctx.update.callback_query
     let animeId = msg.message.text.split('ID: ')[1].split('\n')[0]
     let name = msg.message.text.split('\n')[0]
@@ -772,9 +768,12 @@ bot.action(/^download_anime-(\d+)$/, async (ctx) => {
     let zip = path.normalize(`./anime/${lastDownloadAnimeList[select].title}(${lastDownloadAnimeList[select].author}).zip`)
     startDownload = Date.now()
     if (!fs.existsSync(zip)) {
-      fs.ensureDirSync(dir)
-      queueAnime(lastDownloadAnimeList[select], 0, msg, name, animeId)
-      bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n<b>Начало скачивание аниме</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({}) })
+      if (nowDownload) {
+        fs.ensureDirSync(dir)
+        queueAnime(lastDownloadAnimeList[select], 0, msg, name, animeId)
+        bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n<b>Начало скачивание аниме</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({}) })
+        return
+      }
     } else {
       bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>✅ Загрузка завершена, можете скачивать 😎</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, {
         disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
