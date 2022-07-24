@@ -45,7 +45,7 @@ app.get('/kodik', (req, res) => {
   res.setHeader("Access-Control-Allow-Methods", "*");
   res.setHeader('Access-Control-Allow-Headers', 'origin, content-type, accept');
   const req_data = qs.parse(req.url.split('?')[1])
-  res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${req_data.title}</title><style>* {margin: 0;padding: 0; }body {height: 100vh;} iframe {width: 100%;height: 100%;}</style></head><body><iframe src="${req_data.video}" frameborder="0" AllowFullScreen allow="autoplay *; fullscreen *"></iframe></body></html>`);
+  res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${req_data.title}</title><style>* {margin: 0;padding: 0; }body {height: 100vh;} iframe {width: 100%;height: 100%;}</style></head><body><iframe src="${req_data.video}" name="anime" frameborder="0" AllowFullScreen allow="autoplay *; fullscreen *"></iframe></body></html>`);
 });
 
 app.get('/authorize', (req, res) => {
