@@ -728,13 +728,16 @@ bot.action('list_download', async (ctx) => {
     let row = 0
     lastDownloadAnimeList = []
     kodik.results.forEach(async (a, ind) => {
+      let have = false
+      let zip = path.normalize(`./anime/${a.title_orig.replace(/[/\\?%*:|"<>]/g, '')}(${a.translation.title}).zip`)
+      if(fs.existsSync(zip)) have = true
       lastDownloadAnimeList.push({
         episodesLinks: Object.keys(a.seasons[Object.keys(a.seasons)[0]].episodes).map(key => `https://animebot.smotrel.net/kodik?video=${a.seasons[Object.keys(a.seasons)[0]].episodes[key]}&title=${a.title_orig}`),
         author: a.translation.title,
-        title: a.title_orig
+        title: a.title_orig.replace(/[/\\?%*:|"<>]/g, '')
       })
       animeKeyboard.inline_keyboard[row].push({
-        text: `${a.translation.title}(${a.translation.type})`,
+        text: `${have ? '✅ ' : ''}${a.translation.title}(${a.translation.type})`,
         callback_data: `download_anime-${ind}`,
         hide: false
       })
@@ -743,7 +746,7 @@ bot.action('list_download', async (ctx) => {
         row++
       }
     })
-    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Выберите студию:</b> `, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
+    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Выберите студию:</b> \n✅ - аниме уже скачано ботом`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
     ctx.answerCbQuery(``)
   } catch (er) {
     console.log(er)
@@ -762,7 +765,6 @@ bot.action(/^download_anime-(\d+)$/, async (ctx) => {
       ]
     }
     if (!lastDownloadAnimeList) return
-    lastDownloadAnimeList[select].title = lastDownloadAnimeList[select].title.replace(/[/\\?%*:|"<>]/g, '')
     // lastDownloadAnimeList[select].episodesLinks = lastDownloadAnimeList[select].episodesLinks.slice(0, 2)
     let dir = path.normalize(`./anime/${lastDownloadAnimeList[select].title}(${lastDownloadAnimeList[select].author})`)
     let zip = path.normalize(`./anime/${lastDownloadAnimeList[select].title}(${lastDownloadAnimeList[select].author}).zip`)
@@ -806,26 +808,30 @@ async function queueAnime(animeArray, id, msg, name, animeId) {
     })
     return
   }
-  nowDownload = true
-  let m3u8File = await getM3u8(animeArray.episodesLinks[id])
-  bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Загрузка ${id + 1}/${animeArray.episodesLinks.length} серии</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({}) })
+  try {
+    nowDownload = true
+    let m3u8File = await getM3u8(animeArray.episodesLinks[id])
+    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Загрузка ${id + 1}/${animeArray.episodesLinks.length} серии</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({}) })
 
-  let lastPercent = 0
+    let lastPercent = 0
 
-  ffmpeg()
-    .input(m3u8File)
-    .outputOptions('-c copy')
-    .outputOptions('-bsf:a aac_adtstoasc')
-    .save(`anime/${animeArray.title}(${animeArray.author})/${animeArray.title}(${animeArray.author}) ${id + 1}.mp4`)
-    .on('progress', (res) => {
+    ffmpeg()
+      .input(m3u8File)
+      .outputOptions('-c copy')
+      .outputOptions('-bsf:a aac_adtstoasc')
+      .save(`anime/${animeArray.title}(${animeArray.author})/${animeArray.title}(${animeArray.author}) ${id + 1}.mp4`)
+      .on('progress', (res) => {
 
-    })
-    .on('end', () => {
-      queueAnime(animeArray, id + 1, msg, name, animeId)
-    })
-    .on('error', (err) => {
-      bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Произошла ошибка 😢 \n${err} серии</b> `, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({}) })
-    })
+      })
+      .on('end', () => {
+        queueAnime(animeArray, id + 1, msg, name, animeId)
+      })
+      .on('error', (err) => {
+        bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Произошла ошибка 😢 \n${err} серии</b> `, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({}) })
+      })
+  } catch (er) {
+    console.log(er)
+  }
 }
 
 async function zipDirectory(sourceDir, outPath, msg, name, animeId, episodes) {
@@ -935,7 +941,6 @@ bot.action(/^watch-(\d+)$/, async (ctx) => {
 
 bot.action(/^list_dub-(\d+)$/, async (ctx) => {
   try {
-
     let msg = ctx.update.callback_query
     let animeId = msg.message.text.split('ID: ')[1].split('\n')[0]
     let name = msg.message.text.split('\n')[0]
