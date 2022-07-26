@@ -1142,8 +1142,8 @@ function statusToRus(status) {
 function getEpisode(data, kodik, episode, type) {
   kodik.results.forEach(a => {
     let kind = 'озвучка'
-    let videoUrl = a.link
-    if (a.seasons) videoUrl = a.seasons[Object.keys(a.seasons)[0]].episodes[`${episode}`]
+    let videoUrl = a.link    
+    if (a.seasons) videoUrl = a.seasons[a.last_season].episodes[`${episode}`]
     if (a.translation.type == 'subtitles') kind = 'субтитры'
     if (videoUrl) data.push({
       id: a.id,
