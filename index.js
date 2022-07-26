@@ -793,7 +793,7 @@ bot.action('cancel_download', async (ctx) => {
     let select = ctx.match[1]
     let animeId = msg.message.text.split('ID: ')[1].split('\n')[0]
     let name = msg.message.text.split('\n')[0]
-    if(nowDownload) {
+    if (nowDownload) {
       isCancel = true
       ctx.answerCbQuery(`Подождите пару секунд, пока бот закончит загрузку серии и остановит загрузку аниме`)
     } else {
@@ -889,10 +889,10 @@ async function getM3u8(url, info) {
   return new Promise(async resolve => {
     try {
       let browser = await puppeteer.launch({
-        headless: true, 
+        headless: true,
         args: [
-          '--no-sandbox', 
-          '--disable-web-security', 
+          '--no-sandbox',
+          '--disable-web-security',
           '--disable-features=IsolateOrigins,site-per-process'
         ],
         executablePath: '/usr/bin/google-chrome'
@@ -933,9 +933,9 @@ bot.action(/^watch-(\d+)$/, async (ctx) => {
         let maxEpidose = msg.message.text.split('Эпизоды: ')[1].split('\n')[0]
         let episode = +ctx.match[0].split('-')[1]
         let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
-        const res = await axios.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
-        let episodeText = getEpisode(res.data, 0)
-        let animeKeyboard = {
+        const { data: shiki } = await axios.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
+        const { data: kodik } = await axios.get(`https://kodikapi.com/search?token=8e329159687fc1a2f5af99a50bf57070&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+        let episodeText = getEpisode(shiki, kodik, episode, 0); let animeKeyboard = {
           'inline_keyboard': [
             [{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '✅ Озвучка', callback_data: `list_dub-${episode}`, hide: false }, { text: 'Субтитры', callback_data: `list_sub-${episode}`, hide: false }, { text: 'Оригинал', callback_data: `list_original-${episode}`, hide: false }],
             [{}, {}, {}, {}],
@@ -1142,7 +1142,7 @@ function statusToRus(status) {
 function getEpisode(data, kodik, episode, type) {
   kodik.results.forEach(a => {
     let kind = 'озвучка'
-    let videoUrl = a.link    
+    let videoUrl = a.link
     if (a.seasons) videoUrl = a.seasons[a.last_season].episodes[`${episode}`]
     if (a.translation.type == 'subtitles') kind = 'субтитры'
     if (videoUrl) data.push({
