@@ -733,7 +733,7 @@ bot.action('list_download', async (ctx) => {
       let zip = path.normalize(`./anime/${a.title_orig.replace(/[/\\?%*:|"<>]/g, '')}(${a.translation.title}).zip`)
       if (fs.existsSync(zip)) have = true
       lastDownloadAnimeList.push({
-        episodesLinks: Object.keys(a.seasons[Object.keys(a.seasons)[0]].episodes).map(key => `https://animebot.smotrel.net/kodik?video=${a.seasons[Object.keys(a.seasons)[0]].episodes[key]}&title=${a.title_orig}`),
+        episodesLinks: Object.keys(a.seasons[a.last_season].episodes).map(key => `https://animebot.smotrel.net/kodik?video=${a.seasons[Object.keys(a.seasons)[0]].episodes[key]}&title=${a.title_orig}`),
         author: a.translation.title,
         title: a.title_orig.replace(/[/\\?%*:|"<>]/g, '')
       })
