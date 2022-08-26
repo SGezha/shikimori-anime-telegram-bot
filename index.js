@@ -856,9 +856,11 @@ async function queueAnime(animeArray, id, msg, name, animeId) {
         queueAnime(animeArray, id + 1, msg, name, animeId)
       })
       .on('error', (err) => {
+        nowDownload = false
         bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Произошла ошибка 😢 \n${err} серии</b> `, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({}) })
       })
   } catch (er) {
+    nowDownload = false
     console.log(er)
   }
 }
