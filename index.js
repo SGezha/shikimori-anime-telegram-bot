@@ -857,7 +857,11 @@ async function queueAnime(animeArray, id, msg, name, animeId) {
       })
       .on('error', (err) => {
         nowDownload = false
-        bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Произошла ошибка 😢 \n${err} серии</b> `, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({}) })
+        bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Произошла ошибка 😢 \n${err} серии</b> `, {
+          disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
+            'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://animebot.smotrel.net/${animeArray.title}(${animeArray.author}).zip`, hide: false }]]
+          })
+        })
       })
   } catch (er) {
     nowDownload = false
