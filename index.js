@@ -220,7 +220,7 @@ bot.action(/^profile-(\d+)$/, async (ctx) => {
   if (user != undefined) {
     user = await getNewToken(user)
     const { data: profile } = await axios.get(`https://shikimori.one/api/users/${user.nickname}?is_nickname=1`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
-    const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${profile.id}&limit=1000&status=watching`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
+    const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${profile.id}&limit=1000`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
     const { data: animeList } = await axios.get(`https://shikimori.one/api/animes?ids=${list.map(id => id.target_id).join(',')}&limit=50`)
     let nowText = `\n<b>Сейчас смотрит:</b> `
     list.forEach(async (a, ind) => {
@@ -229,9 +229,17 @@ bot.action(/^profile-(\d+)$/, async (ctx) => {
     })
     let animeKeyboard = {
       'inline_keyboard': [
-        [{ text: '✅ Профиль', callback_data: `profile-${selectedUser}`, hide: false }, { text: 'Список просмотренного', callback_data: `profile_completed-${selectedUser}`, hide: false }],
+        [{ text: '✅ Профиль', callback_data: `profile-${selectedUser}`, hide: false }, { text: 'Список аниме', callback_data: `profile_completed-${selectedUser}`, hide: false }],
       ]
     }
+    // let animes = {
+    //   planned: list.filter(a => { if (a.status == 'planned') return true }),
+    //   watching: list.filter(a => { if (a.status == 'watching') return true }),
+    //   rewatching: list.filter(a => { if (a.status == 'rewatching') return true }),
+    //   on_hold: list.filter(a => { if (a.status == 'on_hold') return true }),
+    //   dropped: list.filter(a => { if (a.status == 'dropped') return true })
+    // }
+    console.log(animes)
     bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<a href="${profile.url}"><b>${profile.nickname}</b></a><a href="${profile.image.x160}">\n</a>Последняя активность: ${new Date(profile.last_online_at).toLocaleDateString()}\nВозраст: ${profile.full_years}\n${nowText}`, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard), disable_web_page_preview: false })
   } else {
     ctx.reply(`Для авторизации введите команду /auth (Работает только в личных сообщениях)`)
@@ -256,7 +264,7 @@ bot.action(/^profile_completed-(\d+)$/, async (ctx) => {
     })
     let animeKeyboard = {
       'inline_keyboard': [
-        [{ text: 'Профиль', callback_data: `profile-${selectedUser}`, hide: false }, { text: '✅ Список просмотренного', callback_data: `profile_completed-${selectedUser}`, hide: false }],
+        [{ text: 'Профиль', callback_data: `profile-${selectedUser}`, hide: false }, { text: '✅ Список аниме', callback_data: `profile_completed-${selectedUser}`, hide: false }],
       ]
     }
     bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<a href="${profile.url}"><b>${profile.nickname}</b></a>\n${nowText}`, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard), disable_web_page_preview: true })
