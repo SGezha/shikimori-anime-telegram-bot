@@ -1071,9 +1071,9 @@ bot.action(/^list_dub-(\d+)$/, async (ctx) => {
         animeKeyboard.inline_keyboard.push([{ text: `⛔️ Отметить серию`, callback_data: `watch-${episode}`, hide: false }])
       }
     }
-    if (parseInt(maxEpidose) <= 70) {
-      animeKeyboard.inline_keyboard.push([{ text: `💾 Скачать аниме`, callback_data: `list_download`, hide: false }])
-    }
+    // if (parseInt(maxEpidose) <= 70) {
+    //   animeKeyboard.inline_keyboard.push([{ text: `💾 Скачать аниме`, callback_data: `list_download`, hide: false }])
+    // }
     bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\n${episode} серия\nID: ${animeId}\nЭпизоды: ${maxEpidose}\n${episodeText}`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
     ctx.answerCbQuery(``)
   } catch (er) {
