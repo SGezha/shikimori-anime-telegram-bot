@@ -716,13 +716,19 @@ bot.on('message', async (ctx) => {
       bot.telegram.getFileLink(fileId).then(async file => {
         let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
         let result = await axios.get(`https://api.trace.moe/search?url=${encodeURIComponent(file.href)}`)
-        const res = await axios.get(`https://shikimori.one/api/animes/?limit=1&search=${encodeURIComponent(result.data.result[0].filename)}&order=ranked`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
-        const animeRes = await axios.get(`https://shikimori.one/api/animes/${encodeURIComponent(res.data[0].id)}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
+        let animeName = result.data.result[0].filename
+        if(animeName.includes(']')) animeName = animeName.split(']')[1]
+        if(animeName.includes('.')) animeName = animeName.split('.')[0]
+        animeName = animeName.replace(/\s+/g, ' ').trim()
+        const res = await axios.get(`https://shikimori.one/api/animes/?limit=50&search=${encodeURIComponent(animeName)}&order=popularity`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
+        let stringSimilarity = require("string-similarity")
+        const names = res.data.map(a => a.name)
+        let best = stringSimilarity.findBestMatch(animeName, names)
+        const animeRes = await axios.get(`https://shikimori.one/api/animes/${encodeURIComponent(res.data[best.bestMatchIndex].id)}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
         const anime = animeRes.data
         let animeData = await getAnimeData(user, anime, res.data[0].id)
         ctx.reply(animeData.msg + `\nСовпадение: ${(result.data.result[0].similarity * 100).toFixed(1)}%\nСерия: ${parseInt(result.data.result[0].episode)}\nВремя: ${toHHMMSS(result.data.result[0].from)}`, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
       })
-      console.log(fileId)
     } catch (er) {
       ctx.reply('Ошибка: ' + er)
     }
