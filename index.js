@@ -718,7 +718,6 @@ bot.on('message', async (ctx) => {
         let result = await axios.get(`https://api.trace.moe/search?url=${encodeURIComponent(file.href)}`)
         let animeName = result.data.result[0].filename
         if(animeName.includes(']')) animeName = animeName.split(']')[1]
-        if(animeName.includes('.')) animeName = animeName.split('.')[0]
         animeName = animeName.replace(/\s+/g, ' ').trim()
         const res = await axios.get(`https://shikimori.one/api/animes/?limit=50&search=${encodeURIComponent(animeName)}&order=popularity`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
         let stringSimilarity = require("string-similarity")
