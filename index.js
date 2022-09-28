@@ -15,7 +15,8 @@ const { Telegraf, Markup } = require('telegraf'),
   ffprobePath = require('@ffprobe-installer/ffprobe').path,
   puppeteer = require('puppeteer'),
   archiver = require('archiver'),
-  HttpsProxyAgent = require("https-proxy-agent")
+  HttpsProxyAgent = require("https-proxy-agent"),
+  nodeHtmlToImage = require('node-html-to-image')
 
 const db = new StormDB(engine)
 db.default({ profiles: [] })
@@ -158,12 +159,34 @@ bot.command('findbyid', async (ctx) => {
     const res = await axios.get(`https://shikimori.one/api/animes/${parseInt(msgText.split(' ')[1])}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
     const anime = res.data
     let animeData = await getAnimeData(user, anime, msgText.split(' ')[1])
-    ctx.reply(animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
-    ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
+    console.log(anime)
+    nodeHtmlToImage({
+      output: './shiki.png',
+      html: await getShikiImage(anime),
+    })
+      .then(() => {
+        ctx.replyWithPhoto({ source: fs.readFileSync("./shiki.png") }, { parse_mode: 'HTML', caption: animeData.msg, reply_markup: JSON.stringify(animeData.keyboard) })
+        ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
+      })
   } catch (er) {
     ctx.reply(`Ошибка при получении данных аниме. Попробуйте еще раз.\nЕсли ошибка повторяется, обратитесь к создателю бота.\n${er}`)
   }
 })
+
+const getShikiImage = async (anime) => {
+  let page = fs.readFileSync('./shiki-page.html', 'utf8').toString()
+  page = page.replace('{{ Name }}', anime.russian)
+  page = page.replace('{{ Name_en }}', anime.name)
+  page = page.replace('{{ Name_en }}', anime.name)
+  page = page.replace('{{ Name_jp }}', anime.japanese[0])
+  page = page.replace('{{ Name_others }}', anime.synonyms.toString() )
+  page = page.replace('{{ Poster_img }}', `https://shikimori.one${anime.image.preview}`)
+  page = page.replace('{{ Stars }}', anime.score)
+  page = page.replace('{{ Studia }}', `https://shikimori.one${anime.studios[0].image}`)
+  page = page.replace('{{ Genres }}', anime.genres.map(genre => `<div class="value"><a class="b-tag bubbled-processed" data-href="https://shikimori.one/moderations/genres/42-Seinen/tooltip" data-predelay="350" href="https://shikimori.one/animes/genre/42-Seinen"><span class="genre-ru">${genre.russian}</span></div>`).filter(a => !a.includes(',')))
+  fs.writeFileSync('test.html', page)
+  return page
+}
 
 bot.command('profile', async (ctx) => {
   try {
@@ -717,7 +740,7 @@ bot.on('message', async (ctx) => {
         let user = db.get('profiles').value().find(a => { if (ctx.from.id == a.telegram_id) return true })
         let result = await axios.get(`https://api.trace.moe/search?url=${encodeURIComponent(file.href)}`)
         let animeName = result.data.result[0].filename
-        if(animeName.includes(']')) animeName = animeName.split(']')[1]
+        if (animeName.includes(']')) animeName = animeName.split(']')[1]
         animeName = animeName.replace(/\s+/g, ' ').trim()
         const res = await axios.get(`https://shikimori.one/api/animes/?limit=50&search=${encodeURIComponent(animeName)}&order=popularity`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
         let stringSimilarity = require("string-similarity")
@@ -1262,14 +1285,14 @@ function msToTime(start, finish) {
 
 function toHHMMSS(time) {
   var sec_num = parseInt(time, 10); // don't forget the second param
-  var hours   = Math.floor(sec_num / 3600);
+  var hours = Math.floor(sec_num / 3600);
   var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
   var seconds = sec_num - (hours * 3600) - (minutes * 60);
 
-  if (hours   < 10) {hours   = "0"+hours;}
-  if (minutes < 10) {minutes = "0"+minutes;}
-  if (seconds < 10) {seconds = "0"+seconds;}
-  return hours+':'+minutes+':'+seconds;
+  if (hours < 10) { hours = "0" + hours; }
+  if (minutes < 10) { minutes = "0" + minutes; }
+  if (seconds < 10) { seconds = "0" + seconds; }
+  return hours + ':' + minutes + ':' + seconds;
 }
 
 function getRandomInt(min, max) {

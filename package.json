@@ -21,6 +21,7 @@
     "http-proxy-agent": "^5.0.0",
     "https-proxy-agent": "^5.0.1",
     "node-fetch": "^3.2.10",
+    "node-html-to-image": "^3.2.4",
     "nodemon": "^2.0.19",
     "passport": "^0.6.0",
     "passport-shikimori": "^1.0.2",
