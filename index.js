@@ -183,7 +183,7 @@ const getShikiImage = async (anime) => {
   page = page.replace('{{ Poster_img }}', `https://shikimori.one${anime.image.preview}`)
   page = page.replace('{{ Stars }}', anime.score)
   page = page.replace('{{ Studia }}', `https://shikimori.one${anime.studios[0].image}`)
-  page = page.replace('{{ Genres }}', anime.genres.map(genre => `<div class="value"><a class="b-tag bubbled-processed" data-href="https://shikimori.one/moderations/genres/42-Seinen/tooltip" data-predelay="350" href="https://shikimori.one/animes/genre/42-Seinen"><span class="genre-ru">${genre.russian}</span></div>`).filter(a => !a.includes(',')))
+  page = page.replace('{{ Genres }}', anime.genres.map(genre => `<div class="value"><a class="b-tag bubbled-processed" href="#"><span class="genre-ru">${genre.russian}</span></div>`).filter(a => !a.includes(',')))
   fs.writeFileSync('test.html', page)
   return page
 }
