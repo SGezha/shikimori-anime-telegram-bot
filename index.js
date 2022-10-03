@@ -159,14 +159,8 @@ bot.command('findbyid', async (ctx) => {
     const res = await axios.get(`https://shikimori.one/api/animes/${parseInt(msgText.split(' ')[1])}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
     const anime = res.data
     let animeData = await getAnimeData(user, anime, msgText.split(' ')[1])
-    nodeHtmlToImage({
-      output: './shiki.png',
-      html: await getShikiImage(anime),
-    })
-      .then(() => {
-        ctx.replyWithPhoto({ source: fs.readFileSync("./shiki.png") }, { parse_mode: 'HTML', caption: animeData.msg, reply_markup: JSON.stringify(animeData.keyboard) })
-        ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
-      })
+    ctx.reply(animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
+    ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
   } catch (er) {
     ctx.reply(`Ошибка при получении данных аниме. Попробуйте еще раз.\nЕсли ошибка повторяется, обратитесь к создателю бота.\n${er}`)
   }
@@ -1045,9 +1039,9 @@ bot.action(/^watch-(\d+)$/, async (ctx) => {
         let maxEpidose = msg.message.text.split('Эпизоды: ')[1].split('\n')[0]
         let episode = +ctx.match[0].split('-')[1]
         let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
-        const { data: shiki } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
+        // const { data: shiki } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
         const { data: kodik } = await axios.get(`https://kodikapi.com/search?token=8e329159687fc1a2f5af99a50bf57070&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
-        let episodeText = getEpisode(shiki, kodik, episode, 0); let animeKeyboard = {
+        let episodeText = getEpisode([], kodik, episode, 0); let animeKeyboard = {
           'inline_keyboard': [
             [{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '✅ Озвучка', callback_data: `list_dub-${episode}`, hide: false }, { text: 'Субтитры', callback_data: `list_sub-${episode}`, hide: false }, { text: 'Оригинал', callback_data: `list_original-${episode}`, hide: false }],
             [{}, {}, {}, {}],
@@ -1091,9 +1085,9 @@ bot.action(/^list_dub-(\d+)$/, async (ctx) => {
     let maxEpidose = msg.message.text.split('Эпизоды: ')[1].split('\n')[0]
     let episode = +ctx.match[0].split('-')[1]
     let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
-    const { data: shiki } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
+    // const { data: shiki } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
     const { data: kodik } = await axios.get(`https://kodikapi.com/search?token=8e329159687fc1a2f5af99a50bf57070&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
-    let episodeText = getEpisode(shiki, kodik, episode, 0);
+    let episodeText = getEpisode([], kodik, episode, 0);
     let animeKeyboard = {
       'inline_keyboard': [
         [{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '✅ Озвучка', callback_data: `list_dub-${episode}`, hide: false }, { text: 'Субтитры', callback_data: `list_sub-${episode}`, hide: false }, { text: 'Оригинал', callback_data: `list_original-${episode}`, hide: false }],
@@ -1140,9 +1134,9 @@ bot.action(/^list_sub-(\d+)$/, async (ctx) => {
     let maxEpidose = msg.message.text.split('Эпизоды: ')[1].split('\n')[0]
     let episode = +ctx.match[0].split('-')[1]
     let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
-    const { data: shiki } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
+    // const { data: shiki } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
     const { data: kodik } = await axios.get(`https://kodikapi.com/search?token=8e329159687fc1a2f5af99a50bf57070&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
-    let episodeText = getEpisode(shiki, kodik, episode, 1)
+    let episodeText = getEpisode([], kodik, episode, 1)
     let animeKeyboard = {
       'inline_keyboard': [
         [{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: 'Озвучка', callback_data: `list_dub-${episode}`, hide: false }, { text: '✅ Субтитры', callback_data: `list_sub-${episode}`, hide: false }, { text: 'Оригинал', callback_data: `list_original-${episode}`, hide: false }],
