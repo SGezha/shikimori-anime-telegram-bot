@@ -159,7 +159,6 @@ bot.command('findbyid', async (ctx) => {
     const res = await axios.get(`https://shikimori.one/api/animes/${parseInt(msgText.split(' ')[1])}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
     const anime = res.data
     let animeData = await getAnimeData(user, anime, msgText.split(' ')[1])
-    console.log(anime)
     nodeHtmlToImage({
       output: './shiki.png',
       html: await getShikiImage(anime),
@@ -174,18 +173,39 @@ bot.command('findbyid', async (ctx) => {
 })
 
 const getShikiImage = async (anime) => {
-  let page = fs.readFileSync('./shiki-page.html', 'utf8').toString()
+  let page = fs.readFileSync('./html/shiki-page.html', 'utf8').toString()
+  page = page.replace('{{ style }}', `<style>${fs.readFileSync('./html/css/shiki.css', 'utf8').toString()}</style>`)
   page = page.replace('{{ Name }}', anime.russian)
   page = page.replace('{{ Name_en }}', anime.name)
   page = page.replace('{{ Name_en }}', anime.name)
-  page = page.replace('{{ Name_jp }}', anime.japanese[0])
-  page = page.replace('{{ Name_others }}', anime.synonyms.toString() )
   page = page.replace('{{ Poster_img }}', `https://shikimori.one${anime.image.preview}`)
   page = page.replace('{{ Stars }}', anime.score)
+  page = page.replace('{{ Rating }}', anime.rating)
+  page = page.replace('{{ Kind }}', anime.kind)
+  page = page.replace('{{ Duration }}', anime.duration)
+  page = page.replace('{{ Episodes }}', anime.episodes)
+  page = page.replace('{{ Episodes_aired }}', anime.episodes_aired)
+
+  let allStatus = anime.rates_statuses_stats.reduce((partialSum, a) => partialSum + a.value, 0)
+  anime.rates_statuses_stats.forEach(s => {
+    page = page.replace(`{{ ${s.name}_число }}`, s.value)
+    page = page.replace(`{{ ${s.name}_процент }}`, isWhatPercentOf(s.value, allStatus))
+  })
+
+  let allScores = anime.rates_scores_stats.reduce((partialSum, a) => partialSum + a.value, 0)
+  anime.rates_scores_stats.forEach(s => {
+    page = page.replace(`{{ ${s.name}_число }}`, s.value)
+    page = page.replace(`{{ ${s.name}_процент }}`, isWhatPercentOf(s.value, allScores))
+  })
+
   page = page.replace('{{ Studia }}', `https://shikimori.one${anime.studios[0].image}`)
-  page = page.replace('{{ Genres }}', anime.genres.map(genre => `<div class="value"><a class="b-tag bubbled-processed" href="#"><span class="genre-ru">${genre.russian}</span></div>`).filter(a => !a.includes(',')))
+  page = page.replace('{{ Genres }}', anime.genres.map(genre => `<div class="value">${genre.russian}</div>`).join(', '))
   fs.writeFileSync('test.html', page)
   return page
+}
+
+function isWhatPercentOf(numA, numB) {
+  return (numA / numB) * 100;
 }
 
 bot.command('profile', async (ctx) => {
@@ -723,8 +743,8 @@ async function getAnimeData(user, anime, animeId, random, message) {
     msg: `<a href="https://shikimori.one/animes/${anime.id}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>
 Звезды: <b>${anime.score}</b> ⭐
 Эпизоды: ${anime.episodes}
-Жанры: ${anime.genres.map(genre => genre.russian).join(', ')}
-Рейтинг: ${anime.rating.toUpperCase()}
+Жанры: ${anime.genres?.map(genre => genre.russian).join(', ')}
+Рейтинг: ${anime.rating?.toUpperCase()}
 ID: ${anime.id}
 Тип: ${anime.kind.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>${anime.description ? (anime.description.replace(/([\[]*)\[(.*?)\]/gm, '').length > 299) ? anime.description.replace(/([\[]*)\[(.*?)\]/gm, '').slice(0, 300) + '...' : anime.description.replace(/([\[]*)\[(.*?)\]/gm, '') : ''}${user != undefined ? '\nСейчас тыкает: <b>' + user.nickname + '</b>' : ''}
 `,
@@ -760,22 +780,30 @@ bot.on('message', async (ctx) => {
 bot.on('inline_query', async (ctx) => {
   try {
     let query = ctx.update.inline_query.query
-    let search = `https://shikimori.one/api/animes/?limit=50&search=${encodeURI(query)}&order=ranked `
+    let search = `https://shikimori.one/api/animes/?limit=50&search=${encodeURI(query)}&order=ranked`
     let result = []
     let res = await axios.get(search, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
-    const data = res.data
 
-    data.forEach(async (i, ind) => {
+    res.data.forEach(async (anime, ind) => {
       result.push({
         type: 'article',
         id: (new Date()).getTime().toString(36) + (Math.random() * ind).toString(36).slice(2),
-        animeId: i.id,
-        title: `${i.name}`,
-        description: `${i.russian ? i.russian : ''}`,
-        thumb_url: `https://shikimori.one${i.image.x48}`,
+        animeId: anime.id,
+        title: `${anime.name}`,
+        description: `${anime.russian ? anime.russian : ''}`,
+        thumb_url: `https://shikimori.one${anime.image.x48}`,
         input_message_content: {
-          message_text: `/findbyid ${i.id}`
-        },
+          message_text: `
+          <a href="https://shikimori.one/animes/${anime.id}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>
+Звезды: <b>${anime.score}</b> ⭐
+Эпизоды: ${anime.episodes}
+ID: ${anime.id}
+Тип: ${anime.kind.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>
+
+Чтобы узнать больше, напишите:
+<code>/findbyid ${anime.id}</code>`,
+          parse_mode: 'HTML'
+        }
       })
     })
 
@@ -784,6 +812,7 @@ bot.on('inline_query', async (ctx) => {
     console.log(er)
   }
 })
+
 
 let lastDownloadAnimeList = []
 let nowDownload = false
