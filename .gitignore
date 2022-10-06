@@ -1,3 +1,4 @@
 node_modules/*
 db.stormdb
 db.stormdb
+.env
