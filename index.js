@@ -795,7 +795,7 @@ bot.on('inline_query', async (ctx) => {
 Эпизоды: ${anime.episodes}
 ID: ${anime.id}
 Тип: ${anime.kind.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>
-Чтобы узнать больше, напишите:
+Чтобы узнать больше, напишите боту в ЛС:
 <code>/findbyid ${anime.id}</code>`,
           parse_mode: 'HTML',
           disable_web_page_preview: true
