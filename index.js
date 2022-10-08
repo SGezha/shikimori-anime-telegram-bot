@@ -103,6 +103,8 @@ bot.start(async (ctx) => {
 bot.command('help', async (ctx) => {
   let msgText = ctx.message.text
   ctx.reply(`Бот для бесплатного просмотра аниме в телеграмме. С функцией синхронизации прогресса с шикимори.
+Гайд по использованию бота: https://telegra.ph/Kak-polzovatsya-botom-10-08-2
+
 Для поиска пишите: 
 @shikimori_anime_bot [Тут название аниме]
 
