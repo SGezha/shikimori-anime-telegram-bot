@@ -24,6 +24,7 @@ db.default({ profiles: [] })
 const httpsAgent = new HttpsProxyAgent({ host: "localhost", port: "8118" })
 
 let axios_proxy = axios.create({ httpsAgent })
+// let axios_proxy = axios
 
 let lastTGid = 0
 
@@ -90,7 +91,11 @@ app.listen(port, () => {
 })
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
+
 bot.launch()
+.then(res => {
+  console.log('Bot started')
+})
 
 bot.start(async (ctx) => {
   let msgText = ctx.message.text
@@ -1034,7 +1039,6 @@ bot.action(/^watch-(\d+)$/, async (ctx) => {
   let animeId = msg.message.text.split('ID: ')[1].split('\n')[0]
   let name = msg.message.text.split('\n')[0]
   let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
-  bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\n${episode} серия\nID: ${animeId}\nЗагрузка серий...`, { disable_web_page_preview: true, parse_mode: 'HTML' })
   if (user != undefined) {
     user = await getNewToken(user)
     axios.post(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${animeId}&target_type=Anime`, { user_rate: { user_id: user.shikimori_id, target_id: animeId, target_type: 'Anime', episodes: parseInt(epidose), status: 'watching' } }, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
@@ -1043,13 +1047,19 @@ bot.action(/^watch-(\d+)$/, async (ctx) => {
         let episode = +ctx.match[0].split('-')[1]
         let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
         let shiki = []
+        let kodik = []
+        // try {
+        //   const { data: shikiPending } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
+        //   shiki = shikiPending
+        // } catch (er) {
+        //   console.log(er)
+        // }
         try {
-          const { data: shikiPending } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
-          shiki = shikiPending
+          const { data: kodikPending } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+          kodik = kodikPending
         } catch (er) {
           console.log(er)
         }
-        const { data: kodik } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
         let episodeText = getEpisode(shiki, kodik, episode, 0); let animeKeyboard = {
           'inline_keyboard': [
             [{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '✅ Озвучка', callback_data: `list_dub-${episode}`, hide: false }, { text: 'Субтитры', callback_data: `list_sub-${episode}`, hide: false }, { text: 'Оригинал', callback_data: `list_original-${episode}`, hide: false }],
@@ -1093,16 +1103,21 @@ bot.action(/^list_dub-(\d+)$/, async (ctx) => {
     let name = msg.message.text.split('\n')[0]
     let maxEpidose = msg.message.text.split('Эпизоды: ')[1].split('\n')[0]
     let episode = +ctx.match[0].split('-')[1]
-    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\n${episode} серия\nID: ${animeId}\nЗагрузка серий...`, { disable_web_page_preview: true, parse_mode: 'HTML' })
     let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
     let shiki = []
+    let kodik = []
+    // try {
+    //   const { data: shikiPending } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
+    //   shiki = shikiPending
+    // } catch (er) {
+    //   console.log(er)
+    // }
     try {
-      const { data: shikiPending } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
-      shiki = shikiPending
+      const { data: kodikPending } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+      kodik = kodikPending
     } catch (er) {
       console.log(er)
-    }
-    const { data: kodik } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+    } 
     let episodeText = getEpisode(shiki, kodik, episode, 0);
     let animeKeyboard = {
       'inline_keyboard': [
@@ -1149,16 +1164,21 @@ bot.action(/^list_sub-(\d+)$/, async (ctx) => {
     let name = msg.message.text.split('\n')[0]
     let maxEpidose = msg.message.text.split('Эпизоды: ')[1].split('\n')[0]
     let episode = +ctx.match[0].split('-')[1]
-    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\n${episode} серия\nID: ${animeId}\nЗагрузка серий...`, { disable_web_page_preview: true, parse_mode: 'HTML' })
     let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
     let shiki = []
+    let kodik = []
+    // try {
+    //   const { data: shikiPending } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
+    //   shiki = shikiPending
+    // } catch (er) {
+    //   console.log(er)
+    // }
     try {
-      const { data: shikiPending } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
-      shiki = shikiPending
+      const { data: kodikPending } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+      kodik = kodikPending
     } catch (er) {
       console.log(er)
-    }
-    const { data: kodik } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+    } 
     let episodeText = getEpisode(shiki, kodik, episode, 1)
     let animeKeyboard = {
       'inline_keyboard': [
@@ -1203,15 +1223,20 @@ bot.action(/^list_original-(\d+)$/, async (ctx) => {
     let maxEpidose = msg.message.text.split('Эпизоды: ')[1].split('\n')[0]
     let episode = +ctx.match[0].split('-')[1]
     let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
-    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\n${episode} серия\nID: ${animeId}\nЗагрузка серий...`, { disable_web_page_preview: true, parse_mode: 'HTML' })
     let shiki = []
+    let kodik = []
+    // try {
+    //   const { data: shikiPending } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
+    //   shiki = shikiPending
+    // } catch (er) {
+    //   console.log(er)
+    // }
     try {
-      const { data: shikiPending } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
-      shiki = shikiPending
+      const { data: kodikPending } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+      kodik = kodikPending
     } catch (er) {
       console.log(er)
     }
-    const { data: kodik } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
     let episodeText = getEpisode(shiki, kodik, episode, 2)
     let animeKeyboard = {
       'inline_keyboard': [
@@ -1358,6 +1383,13 @@ bot.on('chosen_inline_result', ({ chosenInlineResult }) => {
   console.log('chosen inline result', chosenInlineResult)
 })
 
+bot.catch((err) => {
+  console.error('Ooops', err);
+  process.exit(1);  // I choose exit, you should use PM (Process Manager) and let them automatically restart the bot
+  // Or sth else
+  
+})
+
 // Enable graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'))
-process.once('SIGTERM', () => bot.stop('SIGTERM'))
+// process.once('SIGINT', () => bot.stop('SIGINT'))
+// process.once('SIGTERM', () => bot.stop('SIGTERM'))
