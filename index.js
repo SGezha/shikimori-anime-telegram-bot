@@ -991,7 +991,7 @@ async function zipDirectory(sourceDir, outPath, msg, name, animeId, episodes) {
 
     stream.on('close', () => resolve())
     archive.finalize()
-  });
+  })
 }
 
 async function getM3u8(url, info) {
@@ -1060,7 +1060,8 @@ bot.action(/^watch-(\d+)$/, async (ctx) => {
         } catch (er) {
           console.log(er)
         }
-        let episodeText = getEpisode(shiki, kodik, episode, 0); let animeKeyboard = {
+        let episodeText = getEpisode(shiki, kodik, episode, 0)
+        let animeKeyboard = {
           'inline_keyboard': [
             [{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '✅ Озвучка', callback_data: `list_dub-${episode}`, hide: false }, { text: 'Субтитры', callback_data: `list_sub-${episode}`, hide: false }, { text: 'Оригинал', callback_data: `list_original-${episode}`, hide: false }],
             [{}, {}, {}, {}],
@@ -1118,7 +1119,7 @@ bot.action(/^list_dub-(\d+)$/, async (ctx) => {
     } catch (er) {
       console.log(er)
     } 
-    let episodeText = getEpisode(shiki, kodik, episode, 0);
+    let episodeText = getEpisode(shiki, kodik, episode, 0)
     let animeKeyboard = {
       'inline_keyboard': [
         [{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '✅ Озвучка', callback_data: `list_dub-${episode}`, hide: false }, { text: 'Субтитры', callback_data: `list_sub-${episode}`, hide: false }, { text: 'Оригинал', callback_data: `list_original-${episode}`, hide: false }],
@@ -1350,7 +1351,7 @@ function getEpisode(data, kodik, episode, type) {
 }
 
 function msToTime(start, finish) {
-  let duration = finish - start;
+  let duration = finish - start
 
   let seconds = parseInt((duration / 1000) % 60)
   let minutes = parseInt((duration / (1000 * 60)) % 60)
@@ -1358,19 +1359,19 @@ function msToTime(start, finish) {
   hours = (hours < 10) ? "0" + hours : hours
   minutes = (minutes < 10) ? "0" + minutes : minutes
   seconds = (seconds < 10) ? "0" + seconds : seconds
-  return hours + ":" + minutes + ":" + seconds;
+  return hours + ":" + minutes + ":" + seconds
 }
 
 function toHHMMSS(time) {
-  var sec_num = parseInt(time, 10); // don't forget the second param
-  var hours = Math.floor(sec_num / 3600);
-  var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-  var seconds = sec_num - (hours * 3600) - (minutes * 60);
+  var sec_num = parseInt(time, 10) // don't forget the second param
+  var hours = Math.floor(sec_num / 3600)
+  var minutes = Math.floor((sec_num - (hours * 3600)) / 60)
+  var seconds = sec_num - (hours * 3600) - (minutes * 60)
 
-  if (hours < 10) { hours = "0" + hours; }
-  if (minutes < 10) { minutes = "0" + minutes; }
-  if (seconds < 10) { seconds = "0" + seconds; }
-  return hours + ':' + minutes + ':' + seconds;
+  if (hours < 10) { hours = "0" + hours }
+  if (minutes < 10) { minutes = "0" + minutes }
+  if (seconds < 10) { seconds = "0" + seconds }
+  return hours + ':' + minutes + ':' + seconds
 }
 
 function getRandomInt(min, max) {
@@ -1384,10 +1385,8 @@ bot.on('chosen_inline_result', ({ chosenInlineResult }) => {
 })
 
 bot.catch((err) => {
-  console.error('Ooops', err);
-  process.exit(1);  // I choose exit, you should use PM (Process Manager) and let them automatically restart the bot
-  // Or sth else
-  
+  console.error('Ooops', err)
+  process.exit(1)  
 })
 
 // Enable graceful stop
