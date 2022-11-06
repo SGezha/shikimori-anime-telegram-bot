@@ -58,6 +58,11 @@ passport.use(new Strategy(
 
 app.use(express.static('anime'))
 
+app.get('/restart', (req, res) => {
+  res.send(`Перезагрузка бота...`)
+  process.exit(1)  
+})
+
 app.get('/kodik', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader("Access-Control-Allow-Methods", "*")
@@ -1008,7 +1013,7 @@ async function getM3u8(url, info) {
           '--disable-web-security',
           '--disable-features=IsolateOrigins,site-per-process'
         ],
-        executablePath: '/usr/bin/google-chrome'
+        executablePath: '/usr/bin/google-chrome-stable'
         // executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe'
       })
       const [page] = await browser.pages()
@@ -1048,12 +1053,12 @@ bot.action(/^watch-(\d+)$/, async (ctx) => {
         let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
         let shiki = []
         let kodik = []
-        // try {
-        //   const { data: shikiPending } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
-        //   shiki = shikiPending
-        // } catch (er) {
-        //   console.log(er)
-        // }
+        try {
+          const { data: shikiPending } = await axios.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
+          shiki = shikiPending
+        } catch (er) {
+          console.log(er)
+        }
         try {
           const { data: kodikPending } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
           kodik = kodikPending
@@ -1107,12 +1112,12 @@ bot.action(/^list_dub-(\d+)$/, async (ctx) => {
     let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
     let shiki = []
     let kodik = []
-    // try {
-    //   const { data: shikiPending } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
-    //   shiki = shikiPending
-    // } catch (er) {
-    //   console.log(er)
-    // }
+    try {
+      const { data: shikiPending } = await axios.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
+      shiki = shikiPending
+    } catch (er) {
+      console.log(er)
+    }
     try {
       const { data: kodikPending } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
       kodik = kodikPending
@@ -1148,9 +1153,9 @@ bot.action(/^list_dub-(\d+)$/, async (ctx) => {
         animeKeyboard.inline_keyboard.push([{ text: `⛔️ Отметить серию`, callback_data: `watch-${episode}`, hide: false }])
       }
     }
-    // if (parseInt(maxEpidose) <= 70) {
-    //   animeKeyboard.inline_keyboard.push([{ text: `💾 Скачать аниме`, callback_data: `list_download`, hide: false }])
-    // }
+    if (parseInt(maxEpidose) <= 70) {
+      animeKeyboard.inline_keyboard.push([{ text: `💾 Скачать аниме`, callback_data: `list_download`, hide: false }])
+    }
     bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\n${episode} серия\nID: ${animeId}\nЭпизоды: ${maxEpidose}\n${episodeText}`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
     ctx.answerCbQuery(``)
   } catch (er) {
@@ -1168,12 +1173,12 @@ bot.action(/^list_sub-(\d+)$/, async (ctx) => {
     let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
     let shiki = []
     let kodik = []
-    // try {
-    //   const { data: shikiPending } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
-    //   shiki = shikiPending
-    // } catch (er) {
-    //   console.log(er)
-    // }
+    try {
+      const { data: shikiPending } = await axios.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
+      shiki = shikiPending
+    } catch (er) {
+      console.log(er)
+    }
     try {
       const { data: kodikPending } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
       kodik = kodikPending
@@ -1226,12 +1231,12 @@ bot.action(/^list_original-(\d+)$/, async (ctx) => {
     let user = db.get('profiles').value().find(a => { if (msg.from.id == a.telegram_id) return true })
     let shiki = []
     let kodik = []
-    // try {
-    //   const { data: shikiPending } = await axios_proxy.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
-    //   shiki = shikiPending
-    // } catch (er) {
-    //   console.log(er)
-    // }
+    try {
+      const { data: shikiPending } = await axios.get(`https://smarthard.net/api/shikivideos/${animeId}?episode=${episode}&limit=all`, { headers: { 'User-Agent': 'TELEGRAM_BOT_4FUN' } })
+      shiki = shikiPending
+    } catch (er) {
+      console.log(er)
+    }
     try {
       const { data: kodikPending } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
       kodik = kodikPending
@@ -1386,7 +1391,7 @@ bot.on('chosen_inline_result', ({ chosenInlineResult }) => {
 
 bot.catch((err) => {
   console.error('Ooops', err)
-  process.exit(1)  
+  // process.exit(1)  
 })
 
 // Enable graceful stop
