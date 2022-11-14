@@ -776,6 +776,34 @@ ID: ${anime.id}
 }
 
 bot.on('message', async (ctx) => {
+  let query = ctx.message.text
+  if (ctx.message.from.id == ctx.message.chat.id && !query.includes('/')) {
+    console.log(query)
+    let search = `https://shikimori.one/api/animes/?limit=50&search=${encodeURI(query)}&order=ranked`
+    let characters = false
+    if (query.includes('c:')) {
+      query = query.split('c:')[1]
+      characters = true
+    }
+    if (query.includes('с:')) {
+      query = query.split('с:')[1]
+      characters = true
+    }
+    if (characters) search = `https://shikimori.one/api/characters/search?search=${encodeURI(query)}&limit=10`
+    let result = []
+    let res = await axios.get(search, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
+
+    res.data.forEach(async (anime, ind) => {
+      let line = ''
+      if (characters) {
+        line = `<a href="https://shikimori.one/animes/${anime.url}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a> <code>/charactersbyid ${anime.id}</code> `
+      } else {
+        line = `<a href="https://shikimori.one/animes/${anime.id}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a> <b>${anime.score}</b> ⭐ ${anime.kind.toUpperCase()} <code>/findbyid ${anime.id}</code> `
+      }
+      result.push(line)
+    })
+    ctx.reply(`${result.join('\n')} \n\n<b>Чтобы открыть аниме, нажмите на команду (/findbyid или /charactersbyid) и вставьте в ЛС бота.</b>`, { parse_mode: 'HTML', disable_web_page_preview: true })
+  }
   if (ctx.message.photo && ctx.message.caption == '/anime') {
     let fileId = ctx.message.photo.pop().file_id
     try {
