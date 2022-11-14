@@ -184,7 +184,6 @@ bot.command('charactersbyid', async (ctx) => {
     if (msgText.split(' ')[1] == undefined) return ctx.reply('Неверный формат команды. \nПример команды: /charactersbyid <id>')
     const res = await axios.get(`https://shikimori.one/api/characters/${parseInt(msgText.split(' ')[1])}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
     const character = res.data
-    console.log(character)
     ctx.reply(`<a href="https://shikimori.one${character.url}"><b>${character.name}</b> ${character.russian ? '(' + character.russian + ')' : ''}</a><a href="https://shikimori.one${character.image.original}">\n</a>${character.description ? (character.description.replace(/([\[]*)\[(.*?)\]/gm, '').length > 299) ? character.description.replace(/([\[]*)\[(.*?)\]/gm, '').slice(0, 300) + '...' : character.description.replace(/([\[]*)\[(.*?)\]/gm, '') : ''}
 <b>СЭЙЮ:</b> ${character.seyu.map(a => `<a href="https://shikimori.one${a.url}">${a.name} ${a.russian ? '(' + a.russian + ')' : ''}</a>`).join(', ')}
 <b>Аниме:</b> ${character.animes.slice(0, 5).map(a => `<a href="https://shikimori.one${a.url}">${a.name} ${a.russian ? '(' + a.russian + ')' : ''}</a>`).join(', ')}
