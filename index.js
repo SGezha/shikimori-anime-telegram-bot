@@ -872,13 +872,13 @@ bot.on('inline_query', async (ctx) => {
           thumb_url: `https://shikimori.one${anime.image.x48}`,
           input_message_content: {
             message_text: `/findbyid ${anime.id}
-  <a href="https://shikimori.one/animes/${anime.id}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>
-  Звезды: <b>${anime.score}</b> ⭐
-  Эпизоды: ${anime.episodes}
-  ID: ${anime.id}
-  Тип: ${anime.kind.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>
-  Чтобы узнать больше, напишите боту в ЛС:
-  <code>/findbyid ${anime.id}</code>`,
+<a href="https://shikimori.one/animes/${anime.id}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>
+Звезды: <b>${anime.score}</b> ⭐
+Эпизоды: ${anime.episodes}
+ID: ${anime.id}
+Тип: ${anime.kind.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>
+Чтобы узнать больше, напишите боту в ЛС:
+<code>/findbyid ${anime.id}</code>`,
             parse_mode: 'HTML',
             disable_web_page_preview: true
           }
