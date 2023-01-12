@@ -173,67 +173,6 @@ const getRandomSettings = (text, change, changeValue) => {
     return settings
 }
 
-const getAnimeData = async(user, anime, animeId, random, message) => {
-    let nowEpisode = 1
-    let animeKeyboard = { 'inline_keyboard': [[{ text: '📺 Список серий', callback_data: `list_dub-${nowEpisode}`, hide: false }]] }
-    if (user != undefined && !random) {
-        user = await getNewToken(user)
-        const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${anime.id}&target_type=Anime`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
-        if (list.length > 0) {
-            nowEpisode = list[0].episodes
-            animeKeyboard.inline_keyboard[0][0].callback_data = `list_dub-${nowEpisode}`
-            animeKeyboard.inline_keyboard[0].push({ text: `⭐ Изменить оценку (${list[0].score})`, callback_data: `star-20`, hide: false })
-            animeKeyboard.inline_keyboard.push([{ text: `🔹 Изменить статус (${statusToRus(list[0].status)})`, callback_data: `status-20`, hide: false }])
-        } else {
-            animeKeyboard.inline_keyboard[0].push({ text: `⭐ Поставить оценку`, callback_data: `star-20`, hide: false })
-            animeKeyboard.inline_keyboard.push([{ text: `🔹 Поставить статус`, callback_data: `status-20`, hide: false }])
-        }
-    }
-    if (random) {
-        animeKeyboard.inline_keyboard.push([
-            { text: `Выбрать тип`, callback_data: `random_kind-20`, hide: false },
-            { text: `Выбрать статус`, callback_data: `random_status-20`, hide: false },
-        ])
-        animeKeyboard.inline_keyboard.push([
-            { text: `Выбрать мин. оценку`, callback_data: `random_min_star-20`, hide: false },
-            { text: `Выбрать жанры`, callback_data: `random_genres-100`, hide: false },
-        ])
-        if (message) {
-            let randomSettings = getRandomSettings(message)
-            if (randomSettings.star) animeKeyboard.inline_keyboard[2][0].text = `Изменить (${randomSettings.star} ⭐)`
-            if (randomSettings.kind) {
-                randomSettings.kind = randomSettings.kind.toUpperCase()
-                if (randomSettings.kind == 'MOVIE') randomSettings.kind = 'Фильм'
-                if (randomSettings.kind == 'MUSIC') randomSettings.kind = 'Музыка'
-                if (randomSettings.kind == 'SPECIAL') randomSettings.kind = 'Спешл'
-                animeKeyboard.inline_keyboard[1][0].text = `Изменить (${randomSettings.kind})`
-            }
-            if (randomSettings.status) {
-                if (randomSettings.status == 'anons') randomSettings.status = 'Анонсировано'
-                if (randomSettings.status == 'ongoing') randomSettings.status = 'Сейчас выходит'
-                if (randomSettings.status == 'released') randomSettings.status = 'Вышедшее'
-                animeKeyboard.inline_keyboard[1][1].text = `Изменить (${randomSettings.status})`
-            }
-            if (randomSettings.genres.length > 0) {
-                animeKeyboard.inline_keyboard[2][1].text = `Изменить (${randomSettings.genres.map((genresId) => getGenre(genresId)).toString()})`
-            }
-        }
-        animeKeyboard.inline_keyboard[0][0].text = `✅ Выбрать аниме`
-        animeKeyboard.inline_keyboard[0][0].callback_data = `about`
-        animeKeyboard.inline_keyboard.push([{ text: `🔄 Рерол`, callback_data: `random`, hide: false }])
-    }
-    return {
-        msg: `<a href="https://shikimori.one/animes/${anime.id}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>
-Звезды: <b>${anime.score}</b> ⭐
-Эпизоды: ${anime.episodes}
-Жанры: ${anime.genres?.map(genre => genre.russian).join(', ')}
-Рейтинг: ${anime.rating?.toUpperCase()}
-ID: ${anime.id}
-Тип: ${anime.kind.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>${anime.description ? (anime.description.replace(/([\[]*)\[(.*?)\]/gm, '').length > 299) ? anime.description.replace(/([\[]*)\[(.*?)\]/gm, '').slice(0, 300) + '...' : anime.description.replace(/([\[]*)\[(.*?)\]/gm, '') : ''}${user != undefined ? '\nСейчас тыкает: <b>' + user.nickname + '</b>' : ''}`,
-        keyboard: animeKeyboard
-    }
-}
-
 module.exports = {
     getGenre,
     statusToRus,
@@ -243,6 +182,5 @@ module.exports = {
     getRandomInt,
     isWhatPercentOf,
     getShikiImage,
-    getRandomSettings,
-    getAnimeData
+    getRandomSettings
 }
