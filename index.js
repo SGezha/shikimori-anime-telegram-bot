@@ -713,7 +713,7 @@ bot.action(/^random_min_star-(\d+)$/, async (ctx) => {
 bot.on('message', async (ctx) => {
   let query = ctx.message.text
   if (ctx.message.from.id == ctx.message.chat.id && !ctx.message.caption) {
-    console.log(query)
+    if(query.includes('Чтобы узнать больше')) return ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
     let search = `https://shikimori.one/api/animes/?limit=50&search=${encodeURI(query)}&order=ranked`
     let characters = false
     if (query.includes('c:')) {
@@ -733,11 +733,11 @@ bot.on('message', async (ctx) => {
       if (characters) {
         line = `<a href="https://shikimori.one/animes/${anime.url}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a> <code>/charactersbyid ${anime.id}</code> `
       } else {
-        line = `<a href="https://shikimori.one/animes/${anime.id}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a> <b>${anime.score}</b> ⭐ ${anime.kind.toUpperCase()} <code>/findbyid ${anime.id}</code> `
+        line = `<a href="https://shikimori.one/animes/${anime.id}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a> <b>${anime.score}</b> ⭐ ${anime.kind?.toUpperCase()} <code>/findbyid ${anime.id}</code> `
       }
       result.push(line)
     })
-    ctx.reply(`${result.join('\n')} \n\n<b>Чтобы открыть аниме, нажмите на команду (/findbyid или /charactersbyid) и вставьте в ЛС бота.</b>`, { parse_mode: 'HTML', disable_web_page_preview: true })
+    ctx.reply(`${result.slice(0, 10).join('\n')} \n\n<b>Чтобы открыть аниме, нажмите на команду (/findbyid или /charactersbyid) и вставьте в ЛС бота.</b>`, { parse_mode: 'HTML', disable_web_page_preview: true })
   }
   if (ctx.message.photo && ctx.message.caption == '/anime') {
     let fileId = ctx.message.photo.pop().file_id
@@ -762,6 +762,8 @@ bot.on('message', async (ctx) => {
     }
   }
 })
+
+let lastQuery = []
 
 bot.on('inline_query', async (ctx) => {
   try {
@@ -792,7 +794,7 @@ bot.on('inline_query', async (ctx) => {
           description: `${anime.russian}`,
           thumb_url: `https://shikimori.one${anime.image.x48}`,
           input_message_content: {
-            message_text: `/charactersbyid ${anime.id}<a href="https://shikimori.one${anime.image.original}">\n</a><a href="https://shikimori.one/animes/${anime.url}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>`,
+            message_text: `<a href="https://shikimori.one${anime.image.original}">\n</a><a href="https://shikimori.one/animes/${anime.url}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>`,
             parse_mode: 'HTML',
             disable_web_page_preview: false
           }
@@ -806,23 +808,25 @@ bot.on('inline_query', async (ctx) => {
           description: `${anime.russian ? anime.russian : ''}`,
           thumb_url: `https://shikimori.one${anime.image.x48}`,
           input_message_content: {
-            message_text: `/findbyid ${anime.id}
-<a href="https://shikimori.one/animes/${anime.id}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>
+            message_text: `<a href="https://shikimori.one/animes/${anime.id}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>
 Звезды: <b>${anime.score}</b> ⭐
 Эпизоды: ${anime.episodes}
 ID: ${anime.id}
-Тип: ${anime.kind.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>
+Тип: ${anime.kind?.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>
 Чтобы узнать больше, напишите боту в ЛС:
 <code>/findbyid ${anime.id}</code>`,
             parse_mode: 'HTML',
-            disable_web_page_preview: true
-          }
+            disable_web_page_preview: false,
+          },
         }
       }
       result.push(obj)
     })
 
-    return ctx.answerInlineQuery(result)
+    if(result.length > 0) {
+      lastQuery = result
+      return ctx.answerInlineQuery(result)
+    }
   } catch (er) {
     console.log(er)
   }
@@ -1287,8 +1291,15 @@ bot.action(/^list_original-(\d+)$/, async (ctx) => {
   }
 })
 
-bot.on('chosen_inline_result', ({ chosenInlineResult }) => {
-  console.log('chosen inline result', chosenInlineResult)
+bot.on('chosen_inline_result', async  ({ chosenInlineResult }) => {
+  let article = lastQuery.find(a => a.id == chosenInlineResult.result_id)
+  let msgText = article.input_message_content.message_text
+  let animeId = msgText.split('ID: ')[1].split('\n')[0]
+  let user = db.get('profiles').value().find(a => { if (chosenInlineResult.from.id == a.telegram_id) return true })
+  const res = await axios.get(`https://shikimori.one/api/animes/${animeId}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
+  const anime = res.data
+  let animeData = await getAnimeData(user, anime, animeId)
+  bot.telegram.sendMessage(chosenInlineResult.from.id, animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
 })
 
 bot.catch((err) => {
