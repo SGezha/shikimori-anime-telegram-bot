@@ -1,6 +1,6 @@
 const { Telegraf, Markup } = require('telegraf'),
   { getGenre, statusToRus, getEpisode, msToTime, toHHMMSS, getRandomInt, isWhatPercentOf, getShikiImage, getRandomSettings } = require('./functions')
-  axios = require('axios'),
+axios = require('axios'),
   fs = require('fs-extra'),
   express = require('express'),
   app = express(),
@@ -47,64 +47,64 @@ async function getNewToken(user) {
   }
 }
 
-const getAnimeData = async(user, anime, animeId, random, message) => {
+const getAnimeData = async (user, anime, animeId, random, message) => {
   let nowEpisode = 1
   let animeKeyboard = { 'inline_keyboard': [[{ text: '📺 Список серий', callback_data: `list_dub-${nowEpisode}`, hide: false }]] }
   if (user != undefined && !random) {
-      user = await getNewToken(user)
-      const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${anime.id}&target_type=Anime`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
-      if (list.length > 0) {
-          nowEpisode = list[0].episodes
-          animeKeyboard.inline_keyboard[0][0].callback_data = `list_dub-${nowEpisode}`
-          animeKeyboard.inline_keyboard[0].push({ text: `⭐ Изменить оценку (${list[0].score})`, callback_data: `star-20`, hide: false })
-          animeKeyboard.inline_keyboard.push([{ text: `🔹 Изменить статус (${statusToRus(list[0].status)})`, callback_data: `status-20`, hide: false }])
-      } else {
-          animeKeyboard.inline_keyboard[0].push({ text: `⭐ Поставить оценку`, callback_data: `star-20`, hide: false })
-          animeKeyboard.inline_keyboard.push([{ text: `🔹 Поставить статус`, callback_data: `status-20`, hide: false }])
-      }
+    user = await getNewToken(user)
+    const { data: list } = await axios.get(`https://shikimori.one/api/v2/user_rates?user_id=${user.shikimori_id}&limit=1000&target_id=${anime.id}&target_type=Anime`, { headers: { 'User-Agent': 'anime4funbot - Telegram', 'Authorization': `Bearer ${user.token}` } })
+    if (list.length > 0) {
+      nowEpisode = list[0].episodes
+      animeKeyboard.inline_keyboard[0][0].callback_data = `list_dub-${nowEpisode}`
+      animeKeyboard.inline_keyboard[0].push({ text: `⭐ Изменить оценку (${list[0].score})`, callback_data: `star-20`, hide: false })
+      animeKeyboard.inline_keyboard.push([{ text: `🔹 Изменить статус (${statusToRus(list[0].status)})`, callback_data: `status-20`, hide: false }])
+    } else {
+      animeKeyboard.inline_keyboard[0].push({ text: `⭐ Поставить оценку`, callback_data: `star-20`, hide: false })
+      animeKeyboard.inline_keyboard.push([{ text: `🔹 Поставить статус`, callback_data: `status-20`, hide: false }])
+    }
   }
   if (random) {
-      animeKeyboard.inline_keyboard.push([
-          { text: `Выбрать тип`, callback_data: `random_kind-20`, hide: false },
-          { text: `Выбрать статус`, callback_data: `random_status-20`, hide: false },
-      ])
-      animeKeyboard.inline_keyboard.push([
-          { text: `Выбрать мин. оценку`, callback_data: `random_min_star-20`, hide: false },
-          { text: `Выбрать жанры`, callback_data: `random_genres-100`, hide: false },
-      ])
-      if (message) {
-          let randomSettings = getRandomSettings(message)
-          if (randomSettings.star) animeKeyboard.inline_keyboard[2][0].text = `Изменить (${randomSettings.star} ⭐)`
-          if (randomSettings.kind) {
-              randomSettings.kind = randomSettings.kind.toUpperCase()
-              if (randomSettings.kind == 'MOVIE') randomSettings.kind = 'Фильм'
-              if (randomSettings.kind == 'MUSIC') randomSettings.kind = 'Музыка'
-              if (randomSettings.kind == 'SPECIAL') randomSettings.kind = 'Спешл'
-              animeKeyboard.inline_keyboard[1][0].text = `Изменить (${randomSettings.kind})`
-          }
-          if (randomSettings.status) {
-              if (randomSettings.status == 'anons') randomSettings.status = 'Анонсировано'
-              if (randomSettings.status == 'ongoing') randomSettings.status = 'Сейчас выходит'
-              if (randomSettings.status == 'released') randomSettings.status = 'Вышедшее'
-              animeKeyboard.inline_keyboard[1][1].text = `Изменить (${randomSettings.status})`
-          }
-          if (randomSettings.genres.length > 0) {
-              animeKeyboard.inline_keyboard[2][1].text = `Изменить (${randomSettings.genres.map((genresId) => getGenre(genresId)).toString()})`
-          }
+    animeKeyboard.inline_keyboard.push([
+      { text: `Выбрать тип`, callback_data: `random_kind-20`, hide: false },
+      { text: `Выбрать статус`, callback_data: `random_status-20`, hide: false },
+    ])
+    animeKeyboard.inline_keyboard.push([
+      { text: `Выбрать мин. оценку`, callback_data: `random_min_star-20`, hide: false },
+      { text: `Выбрать жанры`, callback_data: `random_genres-100`, hide: false },
+    ])
+    if (message) {
+      let randomSettings = getRandomSettings(message)
+      if (randomSettings.star) animeKeyboard.inline_keyboard[2][0].text = `Изменить (${randomSettings.star} ⭐)`
+      if (randomSettings.kind) {
+        randomSettings.kind = randomSettings.kind.toUpperCase()
+        if (randomSettings.kind == 'MOVIE') randomSettings.kind = 'Фильм'
+        if (randomSettings.kind == 'MUSIC') randomSettings.kind = 'Музыка'
+        if (randomSettings.kind == 'SPECIAL') randomSettings.kind = 'Спешл'
+        animeKeyboard.inline_keyboard[1][0].text = `Изменить (${randomSettings.kind})`
       }
-      animeKeyboard.inline_keyboard[0][0].text = `✅ Выбрать аниме`
-      animeKeyboard.inline_keyboard[0][0].callback_data = `about`
-      animeKeyboard.inline_keyboard.push([{ text: `🔄 Рерол`, callback_data: `random`, hide: false }])
+      if (randomSettings.status) {
+        if (randomSettings.status == 'anons') randomSettings.status = 'Анонсировано'
+        if (randomSettings.status == 'ongoing') randomSettings.status = 'Сейчас выходит'
+        if (randomSettings.status == 'released') randomSettings.status = 'Вышедшее'
+        animeKeyboard.inline_keyboard[1][1].text = `Изменить (${randomSettings.status})`
+      }
+      if (randomSettings.genres.length > 0) {
+        animeKeyboard.inline_keyboard[2][1].text = `Изменить (${randomSettings.genres.map((genresId) => getGenre(genresId)).toString()})`
+      }
+    }
+    animeKeyboard.inline_keyboard[0][0].text = `✅ Выбрать аниме`
+    animeKeyboard.inline_keyboard[0][0].callback_data = `about`
+    animeKeyboard.inline_keyboard.push([{ text: `🔄 Рерол`, callback_data: `random`, hide: false }])
   }
   return {
-      msg: `<a href="https://shikimori.one/animes/${anime.id}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>
+    msg: `<a href="https://shikimori.one/animes/${anime.id}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>
 Звезды: <b>${anime.score}</b> ⭐
 Эпизоды: ${anime.episodes}
 Жанры: ${anime.genres?.map(genre => genre.russian).join(', ')}
 Рейтинг: ${anime.rating?.toUpperCase()}
 ID: ${anime.id}
 Тип: ${anime.kind.toUpperCase()}<a href="${`https://shikimori.one${anime.image.original}`}">\n</a>${anime.description ? (anime.description.replace(/([\[]*)\[(.*?)\]/gm, '').length > 299) ? anime.description.replace(/([\[]*)\[(.*?)\]/gm, '').slice(0, 300) + '...' : anime.description.replace(/([\[]*)\[(.*?)\]/gm, '') : ''}${user != undefined ? '\nСейчас тыкает: <b>' + user.nickname + '</b>' : ''}`,
-      keyboard: animeKeyboard
+    keyboard: animeKeyboard
   }
 }
 
@@ -248,7 +248,7 @@ bot.command('findbyid', async (ctx) => {
     const res = await axios.get(`https://shikimori.one/api/animes/${parseInt(msgText.split(' ')[1])}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
     const anime = res.data
     let animeData = await getAnimeData(user, anime, msgText.split(' ')[1])
-    ctx.reply(animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
+    bot.telegram.sendMessage(ctx.chat.id, animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
     ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
   } catch (er) {
     ctx.reply(`Ошибка при получении данных аниме. Попробуйте еще раз.\nЕсли ошибка повторяется, обратитесь к создателю бота.\n${er}`)
@@ -262,6 +262,7 @@ bot.command('charactersbyid', async (ctx) => {
     const res = await axios.get(`https://shikimori.one/api/characters/${parseInt(msgText.split(' ')[1])}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
     const character = res.data
     ctx.reply(`<a href="https://shikimori.one${character.url}"><b>${character.name}</b> ${character.russian ? '(' + character.russian + ')' : ''}</a><a href="https://shikimori.one${character.image.original}">\n</a>${character.description ? (character.description.replace(/([\[]*)\[(.*?)\]/gm, '').length > 299) ? character.description.replace(/([\[]*)\[(.*?)\]/gm, '').slice(0, 300) + '...' : character.description.replace(/([\[]*)\[(.*?)\]/gm, '') : ''}
+
 <b>СЭЙЮ:</b> ${character.seyu.map(a => `<a href="https://shikimori.one${a.url}">${a.name} ${a.russian ? '(' + a.russian + ')' : ''}</a>`).join(', ')}
 <b>Аниме:</b> ${character.animes.slice(0, 5).map(a => `<a href="https://shikimori.one${a.url}">${a.name} ${a.russian ? '(' + a.russian + ')' : ''}</a>`).join(', ')}
 <b>Манга:</b> ${character.mangas.slice(0, 5).map(a => `<a href="https://shikimori.one${a.url}">${a.name} ${a.russian ? '(' + a.russian + ')' : ''}</a>`).slice(0, 30).join(', ')}
@@ -713,7 +714,7 @@ bot.action(/^random_min_star-(\d+)$/, async (ctx) => {
 bot.on('message', async (ctx) => {
   let query = ctx.message.text
   if (ctx.message.from.id == ctx.message.chat.id && !ctx.message.caption) {
-    if(query.includes('Чтобы узнать больше')) return ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
+    if (query.includes('Чтобы узнать больше')) return ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id)
     let search = `https://shikimori.one/api/animes/?limit=50&search=${encodeURI(query)}&order=ranked`
     let characters = false
     if (query.includes('c:')) {
@@ -768,7 +769,6 @@ let lastQuery = []
 bot.on('inline_query', async (ctx) => {
   try {
     let query = ctx.update.inline_query.query
-    console.log(query)
     let search = `https://shikimori.one/api/animes/?limit=50&search=${encodeURI(query)}&order=ranked`
     let characters = false
     if (query.includes('c:')) {
@@ -795,6 +795,7 @@ bot.on('inline_query', async (ctx) => {
           thumb_url: `https://shikimori.one${anime.image.x48}`,
           input_message_content: {
             message_text: `<a href="https://shikimori.one${anime.image.original}">\n</a><a href="https://shikimori.one/animes/${anime.url}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>
+CID: ${anime.id}
             
 Чтобы узнать больше, напишите боту в ЛС:
 <code>/charactersbyid ${anime.id}</code>`,
@@ -826,7 +827,7 @@ ID: ${anime.id}
       result.push(obj)
     })
 
-    if(result.length > 0) {
+    if (result.length > 0) {
       lastQuery = result
       return ctx.answerInlineQuery(result)
     }
@@ -1294,16 +1295,27 @@ bot.action(/^list_original-(\d+)$/, async (ctx) => {
   }
 })
 
-bot.on('chosen_inline_result', async  ({ chosenInlineResult }) => {
+bot.on('chosen_inline_result', async ({ chosenInlineResult }) => {
   let article = lastQuery.find(a => a.id == chosenInlineResult.result_id)
   let msgText = article.input_message_content.message_text
-  if(!msgText.includes('ID:') === undefined) return
-  let animeId = msgText.split('ID: ')[1].split('\n')[0]
-  let user = db.get('profiles').value().find(a => { if (chosenInlineResult.from.id == a.telegram_id) return true })
-  const res = await axios.get(`https://shikimori.one/api/animes/${animeId}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
-  const anime = res.data
-  let animeData = await getAnimeData(user, anime, animeId)
-  bot.telegram.sendMessage(chosenInlineResult.from.id, animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
+  if (!msgText.includes('CID:')) {
+    let animeId = msgText.split('ID: ')[1].split('\n')[0]
+    let user = db.get('profiles').value().find(a => { if (chosenInlineResult.from.id == a.telegram_id) return true })
+    const res = await axios.get(`https://shikimori.one/api/animes/${animeId}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
+    const anime = res.data
+    let animeData = await getAnimeData(user, anime, animeId)
+    bot.telegram.sendMessage(chosenInlineResult.from.id, animeData.msg, { parse_mode: 'HTML', reply_markup: JSON.stringify(animeData.keyboard) })
+  } else {
+    let characterId = msgText.split('CID: ')[1].split('\n')[0]
+    const res = await axios.get(`https://shikimori.one/api/characters/${characterId}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
+    const character = res.data
+    bot.telegram.sendMessage(chosenInlineResult.from.id, `<a href="https://shikimori.one${character.url}"><b>${character.name}</b> ${character.russian ? '(' + character.russian + ')' : ''}</a><a href="https://shikimori.one${character.image.original}">\n</a>${character.description ? (character.description.replace(/([\[]*)\[(.*?)\]/gm, '').length > 299) ? character.description.replace(/([\[]*)\[(.*?)\]/gm, '').slice(0, 300) + '...' : character.description.replace(/([\[]*)\[(.*?)\]/gm, '') : ''}
+
+<b>СЭЙЮ:</b> ${character.seyu.map(a => `<a href="https://shikimori.one${a.url}">${a.name} ${a.russian ? '(' + a.russian + ')' : ''}</a>`).join(', ')}
+<b>Аниме:</b> ${character.animes.slice(0, 5).map(a => `<a href="https://shikimori.one${a.url}">${a.name} ${a.russian ? '(' + a.russian + ')' : ''}</a>`).join(', ')}
+<b>Манга:</b> ${character.mangas.slice(0, 5).map(a => `<a href="https://shikimori.one${a.url}">${a.name} ${a.russian ? '(' + a.russian + ')' : ''}</a>`).slice(0, 30).join(', ')}
+    `, { parse_mode: 'HTML', disable_web_page_preview: false })
+  }
 })
 
 bot.catch((err) => {
