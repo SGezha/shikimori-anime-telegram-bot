@@ -794,7 +794,10 @@ bot.on('inline_query', async (ctx) => {
           description: `${anime.russian}`,
           thumb_url: `https://shikimori.one${anime.image.x48}`,
           input_message_content: {
-            message_text: `<a href="https://shikimori.one${anime.image.original}">\n</a><a href="https://shikimori.one/animes/${anime.url}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>`,
+            message_text: `<a href="https://shikimori.one${anime.image.original}">\n</a><a href="https://shikimori.one/animes/${anime.url}"><b>${anime.name}</b> ${anime.russian ? '(' + anime.russian + ')' : ''}</a>
+            
+Чтобы узнать больше, напишите боту в ЛС:
+<code>/charactersbyid ${anime.id}</code>`,
             parse_mode: 'HTML',
             disable_web_page_preview: false
           }
@@ -1294,6 +1297,7 @@ bot.action(/^list_original-(\d+)$/, async (ctx) => {
 bot.on('chosen_inline_result', async  ({ chosenInlineResult }) => {
   let article = lastQuery.find(a => a.id == chosenInlineResult.result_id)
   let msgText = article.input_message_content.message_text
+  if(!msgText.includes('ID:') === undefined) return
   let animeId = msgText.split('ID: ')[1].split('\n')[0]
   let user = db.get('profiles').value().find(a => { if (chosenInlineResult.from.id == a.telegram_id) return true })
   const res = await axios.get(`https://shikimori.one/api/animes/${animeId}`, { headers: { 'User-Agent': 'anime4funbot - Telegram' } })
