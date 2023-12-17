@@ -114,7 +114,9 @@ passport.use(new Strategy(
     clientID: process.env.SHIKI_CLIENT_ID,
     clientSecret: process.env.SHIKI_CLIENT_SECRET,
     callbackURL: 'https://animebot.smotrel.net/auth/shikimori/callback',
-    scope: ['user_rates']
+    scope: ['user_rates'],
+    authorizationURL: 'https://shikimori.one/oauth/authorize',
+    tokenURL: 'https://shikimori.one/oauth/token'
   },
   (accessToken, refreshToken, profile, done) => {
     let obj = {
