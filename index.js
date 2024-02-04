@@ -838,223 +838,223 @@ ID: ${anime.id}
   }
 })
 
-let lastDownloadAnimeList = []
-let nowDownload = false
-let isCancel = false
-let startDownload = null
+// let lastDownloadAnimeList = []
+// let nowDownload = false
+// let isCancel = false
+// let startDownload = null
 
-bot.action('list_download', async (ctx) => {
-  try {
-    let msg = ctx.update.callback_query
-    let animeId = msg.message.text.split('ID: ')[1].split('\n')[0]
-    let name = msg.message.text.split('\n')[0]
-    const { data: kodik } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
-    let animeKeyboard = {
-      'inline_keyboard': [
-        [{ text: '◀️ Назад', callback_data: 'about', hide: false }],
-      ]
-    }
-    let row = 0
-    lastDownloadAnimeList = []
-    kodik.results.forEach(async (a, ind) => {
-      let have = false
-      let zip = path.normalize(`./anime/${a.title_orig.replace(/[/\\?%*:|"<>]/g, '')}(${a.translation.title}).zip`)
-      if (fs.existsSync(zip)) have = true
-      let episodesLinks = [`https://shiki.sgezha.ru/kodik?video=${a.link}&title=${a.title_orig}`]
-      if (a.seasons) episodesLinks = Object.keys(a.seasons[a.last_season].episodes).map(key => `https://shiki.sgezha.ru/kodik?video=${a.seasons[a.last_season].episodes[key]}&title=${a.title_orig}`)
-      lastDownloadAnimeList.push({
-        episodesLinks,
-        author: a.translation.title,
-        title: a.title_orig.replace(/[/\\?%*:|"<>]/g, '')
-      })
-      animeKeyboard.inline_keyboard[row].push({
-        text: `${have ? '✅ ' : ''}${a.translation.title}(${a.translation.type})`,
-        callback_data: `download_anime-${ind}`,
-        hide: false
-      })
-      if (animeKeyboard.inline_keyboard[row].length > 2) {
-        animeKeyboard.inline_keyboard.push([])
-        row++
-      }
-    })
-    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Выберите студию:</b> \n✅ - аниме уже скачано ботом`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
-    ctx.answerCbQuery(``)
-  } catch (er) {
-    console.log(er)
-  }
-})
+// bot.action('list_download', async (ctx) => {
+//   try {
+//     let msg = ctx.update.callback_query
+//     let animeId = msg.message.text.split('ID: ')[1].split('\n')[0]
+//     let name = msg.message.text.split('\n')[0]
+//     const { data: kodik } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+//     let animeKeyboard = {
+//       'inline_keyboard': [
+//         [{ text: '◀️ Назад', callback_data: 'about', hide: false }],
+//       ]
+//     }
+//     let row = 0
+//     lastDownloadAnimeList = []
+//     kodik.results.forEach(async (a, ind) => {
+//       let have = false
+//       let zip = path.normalize(`./anime/${a.title_orig.replace(/[/\\?%*:|"<>]/g, '')}(${a.translation.title}).zip`)
+//       if (fs.existsSync(zip)) have = true
+//       let episodesLinks = [`https://shiki.sgezha.ru/kodik?video=${a.link}&title=${a.title_orig}`]
+//       if (a.seasons) episodesLinks = Object.keys(a.seasons[a.last_season].episodes).map(key => `https://shiki.sgezha.ru/kodik?video=${a.seasons[a.last_season].episodes[key]}&title=${a.title_orig}`)
+//       lastDownloadAnimeList.push({
+//         episodesLinks,
+//         author: a.translation.title,
+//         title: a.title_orig.replace(/[/\\?%*:|"<>]/g, '')
+//       })
+//       animeKeyboard.inline_keyboard[row].push({
+//         text: `${have ? '✅ ' : ''}${a.translation.title}(${a.translation.type})`,
+//         callback_data: `download_anime-${ind}`,
+//         hide: false
+//       })
+//       if (animeKeyboard.inline_keyboard[row].length > 2) {
+//         animeKeyboard.inline_keyboard.push([])
+//         row++
+//       }
+//     })
+//     bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Выберите студию:</b> \n✅ - аниме уже скачано ботом`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
+//     ctx.answerCbQuery(``)
+//   } catch (er) {
+//     console.log(er)
+//   }
+// })
 
-bot.action(/^download_anime-(\d+)$/, async (ctx) => {
-  try {
-    let msg = ctx.update.callback_query
-    let select = ctx.match[1]
-    let animeId = msg.message.text.split('ID: ')[1].split('\n')[0]
-    let name = msg.message.text.split('\n')[0]
-    if (!lastDownloadAnimeList) return
-    // lastDownloadAnimeList[select].episodesLinks = lastDownloadAnimeList[select].episodesLinks.slice(0, 2)
-    let dir = path.normalize(`./anime/${lastDownloadAnimeList[select].title}(${lastDownloadAnimeList[select].author})`)
-    let zip = path.normalize(`./anime/${lastDownloadAnimeList[select].title}(${lastDownloadAnimeList[select].author}).zip`)
-    startDownload = Date.now()
-    if (!fs.existsSync(zip)) {
-      if (nowDownload) {
-        ctx.answerCbQuery('Сейчас бот занят загрузкой другого аниме, подождите пожалуйста 🥺')
-        return
-      } else {
-        fs.ensureDirSync(dir)
-        queueAnime(lastDownloadAnimeList[select], 0, msg, name, animeId)
-        bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}<b>\n\nНачало скачивание аниме</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({}) })
-      }
-    } else {
-      bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>✅ Загрузка завершена, можете скачивать 😎</b>`, {
-        disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
-          'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://shiki.sgezha.ru/${lastDownloadAnimeList[select].title}(${lastDownloadAnimeList[select].author}).zip`, hide: false }]]
-        })
-      })
-    }
-    ctx.answerCbQuery(``)
-  } catch (er) {
-    console.log(er)
-  }
-})
+// bot.action(/^download_anime-(\d+)$/, async (ctx) => {
+//   try {
+//     let msg = ctx.update.callback_query
+//     let select = ctx.match[1]
+//     let animeId = msg.message.text.split('ID: ')[1].split('\n')[0]
+//     let name = msg.message.text.split('\n')[0]
+//     if (!lastDownloadAnimeList) return
+//     // lastDownloadAnimeList[select].episodesLinks = lastDownloadAnimeList[select].episodesLinks.slice(0, 2)
+//     let dir = path.normalize(`./anime/${lastDownloadAnimeList[select].title}(${lastDownloadAnimeList[select].author})`)
+//     let zip = path.normalize(`./anime/${lastDownloadAnimeList[select].title}(${lastDownloadAnimeList[select].author}).zip`)
+//     startDownload = Date.now()
+//     if (!fs.existsSync(zip)) {
+//       if (nowDownload) {
+//         ctx.answerCbQuery('Сейчас бот занят загрузкой другого аниме, подождите пожалуйста 🥺')
+//         return
+//       } else {
+//         fs.ensureDirSync(dir)
+//         queueAnime(lastDownloadAnimeList[select], 0, msg, name, animeId)
+//         bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}<b>\n\nНачало скачивание аниме</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({}) })
+//       }
+//     } else {
+//       bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>✅ Загрузка завершена, можете скачивать 😎</b>`, {
+//         disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
+//           'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://shiki.sgezha.ru/${lastDownloadAnimeList[select].title}(${lastDownloadAnimeList[select].author}).zip`, hide: false }]]
+//         })
+//       })
+//     }
+//     ctx.answerCbQuery(``)
+//   } catch (er) {
+//     console.log(er)
+//   }
+// })
 
-bot.action('cancel_download', async (ctx) => {
-  try {
-    let msg = ctx.update.callback_query
-    let select = ctx.match[1]
-    let animeId = msg.message.text.split('ID: ')[1].split('\n')[0]
-    let name = msg.message.text.split('\n')[0]
-    if (nowDownload) {
-      isCancel = true
-      ctx.answerCbQuery(`Подождите пару секунд, пока бот закончит загрузку серии и остановит загрузку аниме`)
-    } else {
-      ctx.answerCbQuery(`Загрузка не найдена`)
-    }
-  } catch (er) {
-    console.log(er)
-  }
-})
+// bot.action('cancel_download', async (ctx) => {
+//   try {
+//     let msg = ctx.update.callback_query
+//     let select = ctx.match[1]
+//     let animeId = msg.message.text.split('ID: ')[1].split('\n')[0]
+//     let name = msg.message.text.split('\n')[0]
+//     if (nowDownload) {
+//       isCancel = true
+//       ctx.answerCbQuery(`Подождите пару секунд, пока бот закончит загрузку серии и остановит загрузку аниме`)
+//     } else {
+//       ctx.answerCbQuery(`Загрузка не найдена`)
+//     }
+//   } catch (er) {
+//     console.log(er)
+//   }
+// })
 
-async function queueAnime(animeArray, id, msg, name, animeId) {
-  if (!animeArray) return
-  if (isCancel) {
-    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>⛔️ Загрузка отменена</b>`, {
-      disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
-        'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }]]
-      })
-    })
-    isCancel = false
-    lastDownloadAnimeList = []
-    nowDownload = false
-    fs.rmSync(`anime/${animeArray.title}(${animeArray.author})`, { recursive: true, force: true })
-    return
-  }
-  if (animeArray.episodesLinks.length == id) {
-    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>📂 Происходит запаковка аниме в zip, подождите пару минут </b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, {
-      disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({})
-    })
-    zipDirectory(`anime/${animeArray.title}(${animeArray.author})`, `anime/${animeArray.title}(${animeArray.author}).zip`, msg, name, animeId, animeArray.episodesLinks.length).then(res => {
-      nowDownload = false
-      fs.rmSync(`anime/${animeArray.title}(${animeArray.author})`, { recursive: true, force: true })
-      bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>✅ Загрузка завершена, можете скачивать 😎</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, {
-        disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
-          'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://shiki.sgezha.ru/${animeArray.title}(${animeArray.author}).zip`, hide: false }]]
-        })
-      })
-    })
-    return
-  }
-  try {
-    nowDownload = true
-    let m3u8File = await getM3u8(animeArray.episodesLinks[id])
-    bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Загрузка ${id + 1}/${animeArray.episodesLinks.length} серии</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, {
-      disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
-        inline_keyboard: [[{ text: '⛔️ Отменить загрузку', callback_data: 'cancel_download', hide: false }]]
-      })
-    })
+// async function queueAnime(animeArray, id, msg, name, animeId) {
+//   if (!animeArray) return
+//   if (isCancel) {
+//     bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>⛔️ Загрузка отменена</b>`, {
+//       disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
+//         'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }]]
+//       })
+//     })
+//     isCancel = false
+//     lastDownloadAnimeList = []
+//     nowDownload = false
+//     fs.rmSync(`anime/${animeArray.title}(${animeArray.author})`, { recursive: true, force: true })
+//     return
+//   }
+//   if (animeArray.episodesLinks.length == id) {
+//     bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>📂 Происходит запаковка аниме в zip, подождите пару минут </b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, {
+//       disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({})
+//     })
+//     zipDirectory(`anime/${animeArray.title}(${animeArray.author})`, `anime/${animeArray.title}(${animeArray.author}).zip`, msg, name, animeId, animeArray.episodesLinks.length).then(res => {
+//       nowDownload = false
+//       fs.rmSync(`anime/${animeArray.title}(${animeArray.author})`, { recursive: true, force: true })
+//       bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>✅ Загрузка завершена, можете скачивать 😎</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, {
+//         disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
+//           'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://shiki.sgezha.ru/${animeArray.title}(${animeArray.author}).zip`, hide: false }]]
+//         })
+//       })
+//     })
+//     return
+//   }
+//   try {
+//     nowDownload = true
+//     let m3u8File = await getM3u8(animeArray.episodesLinks[id])
+//     bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Загрузка ${id + 1}/${animeArray.episodesLinks.length} серии</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, {
+//       disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
+//         inline_keyboard: [[{ text: '⛔️ Отменить загрузку', callback_data: 'cancel_download', hide: false }]]
+//       })
+//     })
 
-    ffmpeg()
-      .input(m3u8File)
-      .outputOptions('-c copy')
-      .outputOptions('-bsf:a aac_adtstoasc')
-      .save(`anime/${animeArray.title}(${animeArray.author})/${animeArray.title}(${animeArray.author}) ${id + 1}.mp4`)
-      .on('progress', (res) => {
+//     ffmpeg()
+//       .input(m3u8File)
+//       .outputOptions('-c copy')
+//       .outputOptions('-bsf:a aac_adtstoasc')
+//       .save(`anime/${animeArray.title}(${animeArray.author})/${animeArray.title}(${animeArray.author}) ${id + 1}.mp4`)
+//       .on('progress', (res) => {
 
-      })
-      .on('end', () => {
-        queueAnime(animeArray, id + 1, msg, name, animeId)
-      })
-      .on('error', (err) => {
-        nowDownload = false
-        bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Произошла ошибка 😢 \n${err} серии</b> `, {
-          disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
-            'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://shiki.sgezha.ru/${animeArray.title}(${animeArray.author}).zip`, hide: false }]]
-          })
-        })
-      })
-  } catch (er) {
-    nowDownload = false
-    console.log(er)
-  }
-}
+//       })
+//       .on('end', () => {
+//         queueAnime(animeArray, id + 1, msg, name, animeId)
+//       })
+//       .on('error', (err) => {
+//         nowDownload = false
+//         bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Произошла ошибка 😢 \n${err} серии</b> `, {
+//           disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
+//             'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://shiki.sgezha.ru/${animeArray.title}(${animeArray.author}).zip`, hide: false }]]
+//           })
+//         })
+//       })
+//   } catch (er) {
+//     nowDownload = false
+//     console.log(er)
+//   }
+// }
 
-async function zipDirectory(sourceDir, outPath, msg, name, animeId, episodes) {
-  const archive = archiver('zip', { zlib: { level: 9 } })
-  const stream = fs.createWriteStream(outPath)
+// async function zipDirectory(sourceDir, outPath, msg, name, animeId, episodes) {
+//   const archive = archiver('zip', { zlib: { level: 9 } })
+//   const stream = fs.createWriteStream(outPath)
 
-  return new Promise((resolve, reject) => {
-    archive
-      .directory(sourceDir, false)
-      .on("progress", (progress) => {
-        bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>📂 Происходит запаковка аниме в zip: ${progress.entries.processed}/${episodes}</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, {
-          disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({})
-        })
-      })
-      .on('error', err => reject(err))
-      .pipe(stream)
+//   return new Promise((resolve, reject) => {
+//     archive
+//       .directory(sourceDir, false)
+//       .on("progress", (progress) => {
+//         bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>📂 Происходит запаковка аниме в zip: ${progress.entries.processed}/${episodes}</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, {
+//           disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({})
+//         })
+//       })
+//       .on('error', err => reject(err))
+//       .pipe(stream)
 
-    stream.on('close', () => resolve())
-    archive.finalize()
-  })
-}
+//     stream.on('close', () => resolve())
+//     archive.finalize()
+//   })
+// }
 
-async function getM3u8(url, info) {
-  const findFrame = (frames, name) => {
-    return frames.find(f => f.name() === name)
-  }
+// async function getM3u8(url, info) {
+//   const findFrame = (frames, name) => {
+//     return frames.find(f => f.name() === name)
+//   }
 
-  return new Promise(async resolve => {
-    try {
-      let browser = await puppeteer.launch({
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-web-security',
-          '--disable-features=IsolateOrigins,site-per-process'
-        ],
-        executablePath: '/usr/bin/google-chrome-stable'
-        // executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe'
-      })
-      const [page] = await browser.pages()
-      await page.setRequestInterception(true)
-      page.on('response', async (res) => { })
-      page.on('requestfailed', (res) => { })
-      page.on('request', async (res) => {
-        if (res.url().includes('m3u8')) {
-          let resultUrl = res.url().split('360.mp4').join('720.mp4')
-          resolve(resultUrl)
-          await browser.close()
-        }
-        res.continue()
-      })
-      await page.goto(url)
-      const targetFrame = findFrame(page.frames(), 'anime')
-      await targetFrame.waitForSelector('.play_button')
-      await targetFrame.click('.play_button')
-    } catch (er) {
-      console.log(er)
-    }
-  })
-}
+//   return new Promise(async resolve => {
+//     try {
+//       let browser = await puppeteer.launch({
+//         headless: true,
+//         args: [
+//           '--no-sandbox',
+//           '--disable-web-security',
+//           '--disable-features=IsolateOrigins,site-per-process'
+//         ],
+//         executablePath: '/usr/bin/google-chrome-stable'
+//         // executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe'
+//       })
+//       const [page] = await browser.pages()
+//       await page.setRequestInterception(true)
+//       page.on('response', async (res) => { })
+//       page.on('requestfailed', (res) => { })
+//       page.on('request', async (res) => {
+//         if (res.url().includes('m3u8')) {
+//           let resultUrl = res.url().split('360.mp4').join('720.mp4')
+//           resolve(resultUrl)
+//           await browser.close()
+//         }
+//         res.continue()
+//       })
+//       await page.goto(url)
+//       const targetFrame = findFrame(page.frames(), 'anime')
+//       await targetFrame.waitForSelector('.play_button')
+//       await targetFrame.click('.play_button')
+//     } catch (er) {
+//       console.log(er)
+//     }
+//   })
+// }
 
 bot.action(/^watch-(\d+)$/, async (ctx) => {
   let msg = ctx.update.callback_query
@@ -1171,9 +1171,9 @@ bot.action(/^list_dub-(\d+)$/, async (ctx) => {
         animeKeyboard.inline_keyboard.push([{ text: `⛔️ Отметить серию`, callback_data: `watch-${episode}`, hide: false }])
       }
     }
-    if (parseInt(maxEpidose) <= 70) {
-      animeKeyboard.inline_keyboard.push([{ text: `💾 Скачать аниме`, callback_data: `list_download`, hide: false }])
-    }
+    // if (parseInt(maxEpidose) <= 70) {
+    //   animeKeyboard.inline_keyboard.push([{ text: `💾 Скачать аниме`, callback_data: `list_download`, hide: false }])
+    // }
     bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\n${episode} серия\nID: ${animeId}\nЭпизоды: ${maxEpidose}\n${episodeText}`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify(animeKeyboard) })
     ctx.answerCbQuery(``)
   } catch (er) {
