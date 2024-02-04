@@ -22,7 +22,7 @@ const getEpisode = (data, kodik, episode, type) => {
         if (a.translation.type == 'subtitles') kind = 'субтитры'
         if (videoUrl) data.push({
             id: a.id,
-            url: `https://animebot.smotrel.net/kodik?video=${videoUrl}&title=${a.title_orig}`,
+            url: `https://shiki.sgezha.ru/kodik?video=${videoUrl}&title=${a.title_orig}`,
             anime_id: a.shikimori_id,
             anime_english: a.title_orig,
             anime_russian: a.title,
