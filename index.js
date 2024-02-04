@@ -113,7 +113,7 @@ passport.use(new Strategy(
   {
     clientID: process.env.SHIKI_CLIENT_ID,
     clientSecret: process.env.SHIKI_CLIENT_SECRET,
-    callbackURL: 'https://animebot.smotrel.net/auth/shikimori/callback',
+    callbackURL: 'https://shiki.sgezha.ru/auth/shikimori/callback',
     scope: ['user_rates'],
     authorizationURL: 'https://shikimori.one/oauth/authorize',
     tokenURL: 'https://shikimori.one/oauth/token'
@@ -186,7 +186,7 @@ bot.start(async (ctx) => {
   if (ctx.from.id != ctx.chat.id) return
   ctx.reply(`Привет, это бот для просмотра аниме с возможностью синхранизации данных с шикимори.\nБот использует базу данных <a href="https://shikimori.one">Shikimori.one</a> и базу видео <a href="https://chrome.google.com/webstore/detail/shikicinema/hmbjohbggdnlpmokjbholpgegcdbehjp?hl=ru">Shikicinema</a>\n\nДля поиска пишите: 
 @shikimori_anime_bot [Тут название аниме]
-\nДля синхранизации данных в шикимори нажмите кнопки внизу.`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({ 'inline_keyboard': [[{ text: '⚙️ Пройти авторизацию на шикимори', url: `https://animebot.smotrel.net/authorize?id=${ctx.from.id}`, hide: false }]] }) })
+\nДля синхранизации данных в шикимори нажмите кнопки внизу.`, { disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({ 'inline_keyboard': [[{ text: '⚙️ Пройти авторизацию на шикимори', url: `https://shiki.sgezha.ru/authorize?id=${ctx.from.id}`, hide: false }]] }) })
 })
 
 bot.command('help', async (ctx) => {
@@ -223,7 +223,7 @@ bot.command('list', async (ctx) => {
 bot.command('auth', async (ctx) => {
   let msgText = ctx.message.text
   if (ctx.from.id != ctx.chat.id) return
-  ctx.reply(`Для авторизации в шикимори нажмите кнопки внизу.`, { parse_mode: 'HTML', reply_markup: JSON.stringify({ 'inline_keyboard': [[{ text: '⚙️ Пройти авторизацию на шикимори', url: `https://animebot.smotrel.net/authorize?id=${ctx.from.id}`, hide: false }]] }) })
+  ctx.reply(`Для авторизации в шикимори нажмите кнопки внизу.`, { parse_mode: 'HTML', reply_markup: JSON.stringify({ 'inline_keyboard': [[{ text: '⚙️ Пройти авторизацию на шикимори', url: `https://shiki.sgezha.ru/authorize?id=${ctx.from.id}`, hide: false }]] }) })
 })
 
 bot.command('random', async (ctx) => {
@@ -860,8 +860,8 @@ bot.action('list_download', async (ctx) => {
       let have = false
       let zip = path.normalize(`./anime/${a.title_orig.replace(/[/\\?%*:|"<>]/g, '')}(${a.translation.title}).zip`)
       if (fs.existsSync(zip)) have = true
-      let episodesLinks = [`https://animebot.smotrel.net/kodik?video=${a.link}&title=${a.title_orig}`]
-      if (a.seasons) episodesLinks = Object.keys(a.seasons[a.last_season].episodes).map(key => `https://animebot.smotrel.net/kodik?video=${a.seasons[a.last_season].episodes[key]}&title=${a.title_orig}`)
+      let episodesLinks = [`https://shiki.sgezha.ru/kodik?video=${a.link}&title=${a.title_orig}`]
+      if (a.seasons) episodesLinks = Object.keys(a.seasons[a.last_season].episodes).map(key => `https://shiki.sgezha.ru/kodik?video=${a.seasons[a.last_season].episodes[key]}&title=${a.title_orig}`)
       lastDownloadAnimeList.push({
         episodesLinks,
         author: a.translation.title,
@@ -907,7 +907,7 @@ bot.action(/^download_anime-(\d+)$/, async (ctx) => {
     } else {
       bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>✅ Загрузка завершена, можете скачивать 😎</b>`, {
         disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
-          'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://animebot.smotrel.net/${lastDownloadAnimeList[select].title}(${lastDownloadAnimeList[select].author}).zip`, hide: false }]]
+          'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://shiki.sgezha.ru/${lastDownloadAnimeList[select].title}(${lastDownloadAnimeList[select].author}).zip`, hide: false }]]
         })
       })
     }
@@ -957,7 +957,7 @@ async function queueAnime(animeArray, id, msg, name, animeId) {
       fs.rmSync(`anime/${animeArray.title}(${animeArray.author})`, { recursive: true, force: true })
       bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>✅ Загрузка завершена, можете скачивать 😎</b> \nЗатраченное время: ${msToTime(startDownload, Date.now())}`, {
         disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
-          'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://animebot.smotrel.net/${animeArray.title}(${animeArray.author}).zip`, hide: false }]]
+          'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://shiki.sgezha.ru/${animeArray.title}(${animeArray.author}).zip`, hide: false }]]
         })
       })
     })
@@ -987,7 +987,7 @@ async function queueAnime(animeArray, id, msg, name, animeId) {
         nowDownload = false
         bot.telegram.editMessageText(msg.message.chat.id, msg.message.message_id, msg.message.message_id, `<b>${name}</b>\nID: ${animeId}\n\n<b>Произошла ошибка 😢 \n${err} серии</b> `, {
           disable_web_page_preview: true, parse_mode: 'HTML', reply_markup: JSON.stringify({
-            'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://animebot.smotrel.net/${animeArray.title}(${animeArray.author}).zip`, hide: false }]]
+            'inline_keyboard': [[{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '📥 Скачать', url: `https://shiki.sgezha.ru/${animeArray.title}(${animeArray.author}).zip`, hide: false }]]
           })
         })
       })
