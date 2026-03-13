@@ -99,7 +99,7 @@ const getShikiImage = async (anime) => {
     page = page.replace('{{ Name }}', anime.russian)
     page = page.replace('{{ Name_en }}', anime.name)
     page = page.replace('{{ Name_en }}', anime.name)
-    page = page.replace('{{ Poster_img }}', `https://shikimori.one${anime.image.preview}`)
+    page = page.replace('{{ Poster_img }}', `https://shikimori.io${anime.image.preview}`)
     page = page.replace('{{ Stars }}', anime.score)
     page = page.replace('{{ Rating }}', anime.rating)
     page = page.replace('{{ Kind }}', anime.kind)
@@ -119,7 +119,7 @@ const getShikiImage = async (anime) => {
         page = page.replace(`{{ ${s.name}_процент }}`, isWhatPercentOf(s.value, allScores))
     })
 
-    page = page.replace('{{ Studia }}', `https://shikimori.one${anime.studios[0].image}`)
+    page = page.replace('{{ Studia }}', `https://shikimori.io${anime.studios[0].image}`)
     page = page.replace('{{ Genres }}', anime.genres.map(genre => `<div class="value">${genre.russian}</div>`).join(', '))
     fs.writeFileSync('test.html', page)
     return page
