@@ -848,7 +848,7 @@ ID: ${anime.id}
 //     let msg = ctx.update.callback_query
 //     let animeId = msg.message.text.split('ID: ')[1].split('\n')[0]
 //     let name = msg.message.text.split('\n')[0]
-//     const { data: kodik } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+//     const { data: kodik } = await axios.get(`https://kodik-api.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
 //     let animeKeyboard = {
 //       'inline_keyboard': [
 //         [{ text: '◀️ Назад', callback_data: 'about', hide: false }],
@@ -1078,12 +1078,13 @@ bot.action(/^watch-(\d+)$/, async (ctx) => {
           console.log(er)
         }
         try {
-          const { data: kodikPending } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+          const { data: kodikPending } = await axios.get(`https://kodik-api.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
           kodik = kodikPending
         } catch (er) {
           console.log(er)
         }
         let episodeText = getEpisode(shiki, kodik, episode, 0)
+        console.log(episodeText)
         let animeKeyboard = {
           'inline_keyboard': [
             [{ text: '◀️ Назад', callback_data: 'about', hide: false }, { text: '✅ Озвучка', callback_data: `list_dub-${episode}`, hide: false }, { text: 'Субтитры', callback_data: `list_sub-${episode}`, hide: false }, { text: 'Оригинал', callback_data: `list_original-${episode}`, hide: false }],
@@ -1137,7 +1138,7 @@ bot.action(/^list_dub-(\d+)$/, async (ctx) => {
       console.log(er)
     }
     try {
-      const { data: kodikPending } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+      const { data: kodikPending } = await axios.get(`https://kodik-api.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
       kodik = kodikPending
     } catch (er) {
       console.log(er)
@@ -1198,7 +1199,7 @@ bot.action(/^list_sub-(\d+)$/, async (ctx) => {
       console.log(er)
     }
     try {
-      const { data: kodikPending } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+      const { data: kodikPending } = await axios.get(`https://kodik-api.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
       kodik = kodikPending
     } catch (er) {
       console.log(er)
@@ -1256,8 +1257,9 @@ bot.action(/^list_original-(\d+)$/, async (ctx) => {
       console.log(er)
     }
     try {
-      const { data: kodikPending } = await axios.get(`https://kodikapi.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
+      const { data: kodikPending } = await axios.get(`https://kodik-api.com/search?token=${process.env.KODIK}&shikimori_id=${animeId}&with_seasons=true&with_episodes=true`)
       kodik = kodikPending
+      console.log(kodik)
     } catch (er) {
       console.log(er)
     }

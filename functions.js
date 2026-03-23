@@ -15,7 +15,7 @@ const statusToRus = (status) => {
 }
 
 const getEpisode = (data, kodik, episode, type) => {
-    kodik.results.forEach(a => {
+    kodik?.results?.forEach(a => {
         let kind = 'озвучка'
         let videoUrl = a.link
         if (a.seasons) videoUrl = a.seasons[a.last_season].episodes[`${episode}`]
@@ -44,12 +44,13 @@ const getEpisode = (data, kodik, episode, type) => {
         data: []
     }
     ]
-    data.forEach(a => {
+    data?.forEach(a => {
         if (a.kind == 'озвучка') episodesArray[0].data.push(a)
         if (a.kind == 'субтитры') episodesArray[1].data.push(a)
         if (a.kind == 'оригинал') episodesArray[2].data.push(a)
     })
     let episodeText = ''
+    console.log(episodesArray)
     episodesArray[type].data.sort((a, b) => b.watches_count - a.watches_count).filter(a => !a.url.includes('smotret-anime.online')).slice(0, 30).forEach((a, ind) => {
         if (ind == 0) episodeText += `\n`
         let type = a.url
