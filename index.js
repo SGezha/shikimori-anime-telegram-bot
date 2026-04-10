@@ -174,7 +174,16 @@ app.listen(port, () => {
   console.log(`Example app listening on port http://localhost:${port}`)
 })
 
-const bot = new Telegraf(process.env.BOT_TOKEN)
+const { SocksProxyAgent } = require('socks-proxy-agent')
+
+const proxyUri = 'socks5://proxyuser:13792846@194.156.66.233:1080'
+const agent = new SocksProxyAgent(proxyUri)
+
+const bot = new Telegraf(process.env.BOT_TOKEN, {
+  telegram: {
+    agent: agent
+  }
+})
 
 bot.launch()
   .then(res => {
