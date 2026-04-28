@@ -176,7 +176,7 @@ app.listen(port, () => {
 
 const { SocksProxyAgent } = require('socks-proxy-agent')
 
-const proxyUri = 'socks5://proxyuser:13792846@194.156.66.233:1080'
+const proxyUri = 'socks5h://proxyuser:13792846@194.156.66.233:1080'
 const agent = new SocksProxyAgent(proxyUri)
 
 const bot = new Telegraf(process.env.BOT_TOKEN, {
