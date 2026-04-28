@@ -185,10 +185,41 @@ const bot = new Telegraf(process.env.BOT_TOKEN, {
   }
 })
 
-bot.launch()
-  .then(res => {
-    console.log('Bot started')
-  })
+const startBot = async () => {
+  try {
+    await bot.launch()
+    console.log('Бот успешно запущен')
+  } catch (err) {
+    console.error('Ошибка при запуске бота:', err)
+    // Если не удалось запустить, выходим с кодом 1, чтобы PM2 перезапустил процесс
+    process.exit(1)
+  }
+}
+
+startBot()
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason)
+  
+  const errorMsg = reason.toString()
+  // Добавляем проверку на таймаут и ошибки сети
+  if (
+    errorMsg.includes('AbortError') || 
+    errorMsg.includes('ETIMEDOUT') || 
+    errorMsg.includes('ECONNRESET') ||
+    errorMsg.includes('FetchError')
+  ) {
+    console.log('Критическая сетевая ошибка. Перезапуск через 5 секунд...')
+    setTimeout(() => {
+      process.exit(1) 
+    }, 5000)
+  }
+})
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err)
+  process.exit(1)
+})
 
 bot.start(async (ctx) => {
   let msgText = ctx.message.text
